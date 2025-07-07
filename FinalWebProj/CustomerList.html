@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>客户管理</title>
+    <link rel="stylesheet" href="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/theme-chalk/index.css">
+    <style>
+        .app-container {
+            padding: 20px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        .pagination-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .user-avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+       body {
+    font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f2f5 100%);
+    color: #333;
+}
+
+.app-container {
+    padding: 30px 5vw;
+    background: #fff;
+    min-height: calc(100vh - 60px);
+    box-shadow: 0 4px 24px rgba(0, 21, 41, 0.10);
+    border-radius: 18px;
+    margin: 30px auto;
+    max-width: 1200px;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+.el-breadcrumb {
+    margin-bottom: 20px;
+}
+
+.quick-search {
+    margin-bottom: 18px;
+}
+
+.search-container {
+    margin-bottom: 18px;
+    background: #f9fafc;
+    padding: 18px 20px 8px 20px;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.toolbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.table-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+    padding: 10px 0;
+}
+
+.el-table th, .el-table td {
+    font-size: 15px;
+}
+
+.el-table .warning-row {
+    background: #fff7e6 !important;
+}
+
+.el-table .text-danger {
+    color: #F56C6C;
+    font-weight: bold;
+}
+.el-table .text-success {
+    color: #67C23A;
+    font-weight: bold;
+}
+.el-table .text-primary {
+    color: #409EFF;
+    font-weight: bold;
+}
+
+.el-table .action-buttons .el-button {
+    margin: 0 2px;
+}
+
+.pagination-container {
+    margin: 18px 0 0 0;
+    text-align: right;
+}
+
+.card-view {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: flex-start;
+    margin-top: 10px;
+}
+
+.product-card {
+    margin-bottom: 18px;
+}
+
+.el-card {
+    border-radius: 14px !important;
+    box-shadow: 0 2px 12px rgba(64,158,255,0.08);
+    transition: box-shadow 0.2s;
+}
+.el-card:hover {
+    box-shadow: 0 6px 24px rgba(64,158,255,0.18);
+}
+
+.product-image {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+}
+.product-image:hover {
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 8px 0 0 0;
+}
+
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+
+.product-price {
+    color: #409EFF;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.dialog-footer {
+    text-align: right;
+}
+
+@media (max-width: 900px) {
+    .app-container {
+        padding: 10px 2vw;
+        max-width: 100vw;
+    }
+    .card-view {
+        gap: 10px;
+    }
+    .el-card {
+        width: 95vw !important;
+    }
+}
+    </style>
+</head>
+<body style="margin:0;">
+    <div id="app-layout" style="display: flex; height: 100vh;">
+        <!-- 侧边导航栏 -->
+        <div style="width:220px; min-height:100vh; background:#2d3a4b; display:flex; flex-direction:column; box-shadow:2px 0 8px rgba(0,0,0,0.08);">
+            <div style="height:64px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:bold; letter-spacing:2px;">
+                管理后台
+            </div>
+            <el-menu
+                :default-active="activeMenu"
+                class="el-menu-vertical-demo"
+                background-color="#2d3a4b"
+                text-color="#fff"
+                active-text-color="#ffd04b"
+                style="border-right:none; flex:1;"
+                @select="handleMenuSelect">
+                <el-menu-item index="productList.html">
+                    <i class="el-icon-goods"></i>
+                    <span slot="title">商品管理</span>
+                </el-menu-item>
+                <el-menu-item index="orderList.html">
+                    <i class="el-icon-document"></i>
+                    <span slot="title">订单管理</span>
+                </el-menu-item>
+                <el-menu-item index="CustomerList.html">
+                    <i class="el-icon-user"></i>
+                    <span slot="title">客户管理</span>
+                </el-menu-item>
+                <el-menu-item index="deliveryList.html">
+                    <i class="el-icon-truck"></i>
+                    <span slot="title">配送管理</span>
+                </el-menu-item>
+                <el-menu-item index="stockManagement.html">
+                    <i class="el-icon-box"></i>
+                    <span slot="title">库存管理</span>
+                </el-menu-item>
+                <el-menu-item index="statistics.html">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">销售统计</span>
+                </el-menu-item>
+            </el-menu>
+        </div>
+        <!-- 主内容区 -->
+        <div style="flex:1; display:flex; flex-direction:column; background:#f5f7fa; min-width:0;">
+            <!-- 顶部栏 -->
+            <div style="height: 64px; display: flex; align-items: center; justify-content: flex-end; padding: 0 32px; border-bottom: 1px solid #eee; background:#fff;">
+                <el-dropdown @command="handleCommand">
+                    <span class="el-dropdown-link" style="cursor: pointer;">
+                        <el-avatar icon="el-icon-user-solid"></el-avatar>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+            </div>
+            <!-- 内容区 -->
+            <div style="flex:1; padding:32px; overflow:auto; min-width:0;">
+                <div id="app" class="app-container">
+                    <el-breadcrumb separator="/">
+                        <el-breadcrumb-item :to="{ path: 'managerMenu.html' }">首页</el-breadcrumb-item>
+                        <el-breadcrumb-item>客户管理</el-breadcrumb-item>
+                    </el-breadcrumb>
+                    
+                    <div class="search-container">
+                        <el-form :inline="true" :model="searchForm" class="demo-form-inline">
+                            <el-form-item label="客户名称">
+                                <el-input v-model="searchForm.keyword" placeholder="用户名/真实姓名" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="handleSearch">查询</el-button>
+                                <el-button @click="resetSearch">重置</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                    
+                    <div class="action-buttons">
+                        <el-button type="primary" @click="handleAdd">添加客户</el-button>
+                        <el-button type="danger" @click="handleBatchDelete" :disabled="multipleSelection.length===0">批量删除</el-button> 
+                    </div>
+                    
+                    <el-table
+                        :data="userList"
+                        border
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                        <el-table-column
+                          type="selection"
+                          width="55">
+                        </el-table-column>
+                        <el-table-column
+                          prop="customerId"
+                          label="用户ID"
+                          width="80">
+                        </el-table-column>
+                        <el-table-column
+                          prop="username"
+                          label="用户名"
+                          width="140">
+                        </el-table-column>
+                        <el-table-column
+                          prop="realName"
+                          label="真实姓名"
+                          width="140">
+                        </el-table-column>
+                        <el-table-column
+                          prop="phone"
+                          label="手机号"
+                          width="160">
+                        </el-table-column>
+                        <el-table-column
+                          prop="email"
+                          label="邮箱"
+                          width="220">
+                        </el-table-column>
+                        <el-table-column
+                          prop="createTime"
+                          label="注册时间"
+                          width="180">
+                        </el-table-column>
+                        <el-table-column
+                          label="操作"
+                          width="200">
+                          <template slot-scope="scope">
+                            <el-button-group>
+                              <el-button size="mini" type="primary" @click="handleEdit(scope.row)">编辑</el-button>
+                              <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                              <el-button size="mini" type="info" @click="handleViewOrders(scope.row)">订单</el-button>
+                            </el-button-group>
+                          </template>
+                        </el-table-column>
+                    </el-table>
+                    
+                    <div class="pagination-container">
+                        <el-pagination
+                          @size-change="handleSizeChange"
+                          @current-change="handleCurrentChange"
+                          :current-page="currentPage"
+                          :page-sizes="[10, 20, 30, 50]"
+                          :page-size="pageSize"
+                          layout="total, sizes, prev, pager, next, jumper"
+                          :total="total">
+                        </el-pagination>
+                    </div>
+                    
+                    <!-- 客户订单对话框 -->
+                    <el-dialog title="客户订单" :visible.sync="orderDialogVisible" width="80%">
+                        <div v-if="currentUser">
+                            <h3>客户信息</h3>
+                            <el-descriptions border>
+                                <el-descriptions-item label="用户ID">{{currentUser.customerId}}</el-descriptions-item>
+                                <el-descriptions-item label="用户名">{{currentUser.username}}</el-descriptions-item>
+                                <el-descriptions-item label="真实姓名">{{currentUser.realName}}</el-descriptions-item>
+                                <el-descriptions-item label="手机号">{{currentUser.phone}}</el-descriptions-item>
+                                <el-descriptions-item label="邮箱">{{currentUser.email}}</el-descriptions-item>
+                                <el-descriptions-item label="注册时间">{{currentUser.createTime}}</el-descriptions-item>
+                            </el-descriptions>
+                            
+                            <h3 style="margin-top: 20px;">订单列表</h3>
+                            <el-table :data="userOrders" border style="width: 100%; margin-top: 10px;">
+                                <el-table-column prop="orderId" label="订单号" width="180"></el-table-column>
+                                <el-table-column label="商品信息" width="220">
+                                    <template slot-scope="scope">
+                                        <div v-for="item in scope.row.items" :key="item.productId">
+                                            <img :src="item.productImage || item.imageUrl || item.image_url" class="product-image" v-if="item.productImage || item.imageUrl || item.image_url">
+                                            {{item.productName}} × {{item.quantity}}
+                                        </div>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="totalAmount" label="总金额" width="140">
+                                    <template slot-scope="scope">¥{{scope.row.totalAmount.toFixed(2)}}</template>
+                                </el-table-column>
+                                <el-table-column label="订单状态" width="140">
+                                    <template slot-scope="scope">
+                                        <el-tag :type="getStatusTagType(scope.row.status)">
+                                            {{getStatusText(scope.row.status)}}
+                                        </el-tag>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="createTime" label="创建时间" width="180"></el-table-column>
+                                <el-table-column label="操作" width="140">
+                                    <template slot-scope="scope">
+                                        <el-button size="mini" @click="handleOrderDetail(scope.row)">详情</el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            
+                            <div class="pagination-container" style="margin-top: 20px;">
+                                <el-pagination
+                                  @size-change="handleOrderSizeChange"
+                                  @current-change="handleOrderCurrentChange"
+                                  :current-page="orderCurrentPage"
+                                  :page-sizes="[5, 10, 20]"
+                                  :page-size="orderPageSize"
+                                  layout="total, sizes, prev, pager, next, jumper"
+                                  :total="orderTotal">
+                                </el-pagination>
+                            </div>
+                        </div>
+                        <span slot="footer" class="dialog-footer">
+                            <el-button @click="orderDialogVisible = false">关闭</el-button>
+                        </span>
+                    </el-dialog>
+                    
+
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 使用CDN引入所有依赖 -->
+    <script src="https://cdn.bootcdn.net/ajax/libs/vue/2.6.14/vue.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/element-ui/2.15.14/index.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/axios/1.6.7/axios.min.js"></script>
+    <script>
+        Vue.use(ELEMENT);
+        axios.defaults.baseURL = 'http://localhost:9000';
+        axios.defaults.withCredentials = true;
+        new Vue({
+            el: "#app-layout",
+            data() {
+                return {
+                    activeMenu: 'CustomerList.html',
+                    userList: [],
+                    multipleSelection: [],
+                    searchForm: {
+                        keyword: ''
+                    },
+                    currentPage: 1,
+                    pageSize: 10,
+                    total: 0,
+                    
+                    // 客户订单相关
+                    orderDialogVisible: false,
+                    currentUser: null,
+                    userOrders: [],
+                    orderCurrentPage: 1,
+                    orderPageSize: 5,
+                    orderTotal: 0,
+                    
+
+                }
+            },
+            created() {
+                this.getUserList();
+            },
+            methods: {
+                getUserList() {
+                    this.loading = true;
+                    const params = {
+                        pageNum: this.currentPage,
+                        pageSize: this.pageSize,
+                        keyword: this.searchForm.keyword
+                    };
+                    
+                    // 添加时间戳防止缓存
+                    params._t = new Date().getTime();
+                    
+                    axios.get('/customer/list', { params })
+                        .then(response => {
+                            console.log('API响应:', response.data);
+                            this.userList = (response.data.data && response.data.data.list) ? response.data.data.list : [];
+                            this.total = (response.data.data && response.data.data.total) ? response.data.data.total : 0;
+                            
+                            // 调试信息
+                            console.log('客户列表数量:', this.userList.length);
+                            console.log('总数:', this.total);
+                            
+                            // 临时修复：如果显示数量大于总数，使用显示数量作为总数
+                            if (this.userList.length > this.total && this.currentPage === 1) {
+                                console.warn('检测到总数计算错误，使用实际显示数量作为总数');
+                                this.total = this.userList.length;
+                                this.$message.warning(`后端总数计算有误，已自动修正为${this.total}条`);
+                            }
+                            
+                            // 如果数据不一致，显示警告
+                            if (this.userList.length !== this.total && this.currentPage === 1) {
+                                this.$message.warning(`数据可能未完全加载: 显示${this.userList.length}条，总数${this.total}条`);
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('获取客户数据失败:', error);
+                            this.$message.error('获取客户数据失败: ' + error.message);
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+                handleSearch() {
+                    this.currentPage = 1;
+                    this.getUserList();
+                },
+                resetSearch() {
+                    this.searchForm = {
+                        keyword: ''
+                    };
+                    this.handleSearch();
+                },
+                handleAdd() {
+                    window.location.href = 'CustomerAdd.html';
+                },
+                handleEdit(row) {
+                    window.location.href = `CustomerEdit.html?id=${row.customerId}`;
+                },
+                handleDelete(row) {
+                    this.$confirm('确认删除该用户吗?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        axios.post(`/customer/delete/${row.customerId}`).then(res => {
+                            if (res.data.code === 200) {
+                                this.$message.success(res.data.message);
+                                this.getUserList();
+                            } else {
+                                this.$message.error(res.data.message);
+                            }
+                        });
+                    }).catch(() => {});
+                },
+                handleBatchDelete() {
+                    if (this.multipleSelection.length === 0) {
+                        this.$message.warning('请选择要删除的用户');
+                        return;
+                    }
+                    
+                    const ids = this.multipleSelection.map(item => item.customerId);
+                    this.$confirm('确认删除选中的用户吗?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        axios.post("/customer/batchDelete", { ids }).then(res => {
+                            if (res.data.code === 200) {
+                                this.$message.success(res.data.message);
+                                this.getUserList();
+                                this.multipleSelection = [];
+                            } else {
+                                this.$message.error(res.data.message);
+                            }
+                        });
+                    }).catch(() => {});
+                },
+                handleViewOrders(row) {
+                    this.currentUser = row;
+                    this.orderCurrentPage = 1;
+                    this.getUserOrders();
+                    this.orderDialogVisible = true;
+                },
+                getUserOrders() {
+                    axios.get("/customer/orders", {
+                        params: {
+                            customerId: this.currentUser.customerId,
+                            pageNum: this.orderCurrentPage,
+                            pageSize: this.orderPageSize
+                        }
+                    }).then(res => {
+                        if (res.data.code === 200) {
+                            this.userOrders = res.data.data.list;
+                            this.orderTotal = res.data.data.total;
+                        } else {
+                            this.$message.error(res.data.message);
+                        }
+                    }).catch(error => {
+                        this.$message.error('获取订单列表失败');
+                        console.error('Error:', error);
+                    });
+                },
+                handleOrderDetail(row) {
+                    // 跳转到订单详情页面
+                    window.location.href = `managerOrderdetail.html?id=${row.orderId}`;
+                },
+                handleSelectionChange(val) {
+                    this.multipleSelection = val;
+                },
+                handleSizeChange(val) {
+                    this.pageSize = val;
+                    this.getUserList();
+                },
+                handleCurrentChange(val) {
+                    this.currentPage = val;
+                    this.getUserList();
+                },
+                handleOrderSizeChange(val) {
+                    this.orderPageSize = val;
+                    this.getUserOrders();
+                },
+                handleOrderCurrentChange(val) {
+                    this.orderCurrentPage = val;
+                    this.getUserOrders();
+                },
+                getStatusText(status) {
+                    const statusMap = {
+                        0: '待付款',
+                        1: '待发货',
+                        2: '待收货',
+                        3: '已完成',
+                        4: '已取消'
+                    };
+                    return statusMap[status] || '未知状态';
+                },
+                getStatusTagType(status) {
+                    const typeMap = {
+                        0: 'warning',
+                        1: 'primary',
+                        2: 'success',
+                        3: 'info',
+                        4: 'danger'
+                    };
+                    return typeMap[status] || '';
+                },
+
+                handleMenuSelect(index) {
+                    window.location.href = index;
+                },
+                handleCommand(command) {
+                    if (command === 'logout') {
+                        axios.get("/logout").finally(() => {
+                            localStorage.removeItem('userId');
+                            localStorage.removeItem('username');
+                            window.location.href = 'managerLogin.html';
+                        });
+                    }
+                },
+                
+                handleDebug() {
+                    // 显示当前数据状态
+                    this.$alert(`
+当前数据状态:
+- 显示客户数: ${this.userList.length}
+- 总数: ${this.total}
+- 当前页: ${this.currentPage}
+- 每页大小: ${this.pageSize}
+- 搜索关键词: ${this.searchForm.keyword || '无'}
+
+问题分析:
+${this.userList.length > this.total ? '❌ 后端总数计算错误' : '✅ 数据正常'}
+                    `, '调试信息', {
+                        confirmButtonText: '确定',
+                        callback: action => {
+                            // 根据问题类型跳转到不同的调试工具
+                            if (this.userList.length > this.total) {
+                                window.open('debug-backend-count.html', '_blank');
+                            } else {
+                                window.open('debug-customer-count.html', '_blank');
+                            }
+                        }
+                    });
+                },
+                
+                forceRefresh() {
+                    // 清除可能的缓存
+                    localStorage.removeItem('customerListCache');
+                    sessionStorage.removeItem('customerListCache');
+                    
+                    // 强制刷新数据
+                    this.currentPage = 1;
+                    this.getUserList();
+                    
+                    this.$message.success('数据已强制刷新');
+                }
+            },
+            mounted() {
+                // 激活菜单
+                this.activeMenu = 'CustomerList.html';
+            }
+        });
+    </script>
+</body>
+</html>

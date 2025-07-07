@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>精品商城</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #409EFF;
+            --secondary-color: #67C23A;
+            --danger-color: #F56C6C;
+            --warning-color: #E6A23C;
+            --text-color: #303133;
+            --border-color: #DCDFE6;
+            --bg-color: #f8f9fa;
+        }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-color);
+            font-family: 'Noto Sans SC', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .title {
+            margin: 0;
+            color: var(--primary-color);
+            font-size: 28px;
+            font-weight: 500;
+            letter-spacing: 1px;
+        }
+        
+        .cart-btn {
+            background-color: var(--secondary-color);
+            border-color: var(--secondary-color);
+            font-weight: 500;
+            box-shadow: 0 2px 12px 0 rgba(103,194,58,.1);
+        }
+        
+        .cart-btn:hover {
+            background-color: #85ce61;
+            border-color: #85ce61;
+        }
+        
+        .product-card {
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px 0 rgba(0,0,0,.05);
+            transition: all 0.3s ease;
+        }
+        
+        .product-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 6px 16px 0 rgba(0,0,0,.1);
+        }
+        
+        .product-img {
+            width: 100%;
+            height: 180px;
+            object-fit: contain;
+            background: #f5f7fa;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+        
+        .product-info {
+            padding: 15px;
+        }
+        
+        .product-name {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 10px;
+            height: 44px;
+            overflow: hidden;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+        }
+        
+        .product-price {
+            color: var(--danger-color);
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .product-stock {
+            color: #909399;
+            font-size: 12px;
+            margin-bottom: 15px;
+        }
+        
+        .product-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .el-input-number--small {
+            width: 110px;
+        }
+        
+        .el-button--primary {
+            background-color: var(--primary-color);
+            border-color: var(--primary-color);
+        }
+        
+        .el-pagination {
+            margin-top: 30px;
+            text-align: center;
+        }
+        
+        /* 购物车对话框样式 */
+        .cart-dialog {
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .cart-dialog .el-dialog__header {
+            background-color: var(--primary-color);
+        }
+        
+        .cart-dialog .el-dialog__title {
+            color: white;
+        }
+        
+        .cart-dialog .el-dialog__headerbtn .el-dialog__close {
+            color: white;
+        }
+        
+        .cart-total {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--danger-color);
+            text-align: right;
+            margin-top: 20px;
+        }
+        
+        .empty-cart {
+            text-align: center;
+            padding: 40px 0;
+            color: #909399;
+        }
+        
+        .empty-cart-icon {
+            font-size: 60px;
+            color: #DCDFE6;
+            margin-bottom: 20px;
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .title {
+                font-size: 22px;
+            }
+            
+            .product-img {
+                height: 140px;
+            }
+            
+            .product-name {
+                font-size: 14px;
+                height: 38px;
+            }
+            
+            .product-price {
+                font-size: 16px;
+            }
+            
+            .product-actions {
+                flex-direction: column;
+                gap: 10px;
+            }
+            
+            .el-input-number--small {
+                width: 100%;
+            }
+            
+            .el-button {
+                width: 100%;
+            }
+        }
+        
+        /* 网格布局 */
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        @media (max-width: 576px) {
+            .product-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app" class="container">
+    <div class="header">
+        <h1 class="title">精品商城</h1>
+        <el-button class="cart-btn" type="success" icon="el-icon-shopping-cart-full" @click="cartDialogVisible = true">
+            购物车({{ cart.length }})
+        </el-button>
+    </div>
+    
+    <div class="product-grid">
+        <div class="product-card" v-for="product in products" :key="product.productId">
+            <img :src="product.imageUrl || 'https://via.placeholder.com/300?text=No+Image'" class="product-img" alt="商品图片">
+            <div class="product-info">
+                <div class="product-name">{{ product.productName }}</div>
+                <div class="product-price">¥{{ product.price.toFixed(2) }}</div>
+                <div class="product-stock">库存: {{ product.stock }}件</div>
+                <div class="product-actions">
+                    <el-input-number 
+                        v-model="product.buyCount" 
+                        :min="1" 
+                        :max="product.stock" 
+                        size="small"
+                        controls-position="right">
+                    </el-input-number>
+                    <el-button 
+                        type="primary" 
+                        size="small" 
+                        @click="addToCart(product)"
+                        :disabled="product.stock === 0">
+                        {{ product.stock === 0 ? '已售罄' : '加入购物车' }}
+                    </el-button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <el-pagination
+        background
+        layout="prev, pager, next"
+        :total="total"
+        :page-size="pageSize"
+        :current-page.sync="pageNum"
+        @current-change="loadProducts">
+    </el-pagination>
+    
+    <el-dialog 
+        title="我的购物车" 
+        :visible.sync="cartDialogVisible" 
+        width="80%"
+        top="5vh"
+        class="cart-dialog">
+        
+        <template v-if="cart.length > 0">
+            <el-table :data="cart" border stripe style="width: 100%">
+                <el-table-column label="商品图片" width="120">
+                    <template slot-scope="scope">
+                        <img :src="scope.row.imageUrl || 'https://via.placeholder.com/100?text=No+Image'" style="width: 80px; height: 80px; object-fit: contain;">
+                    </template>
+                </el-table-column>
+                <el-table-column prop="productName" label="商品名称"></el-table-column>
+                <el-table-column prop="price" label="单价" width="120">
+                    <template slot-scope="scope">
+                        ¥{{ scope.row.price.toFixed(2) }}
+                    </template>
+                </el-table-column>
+                <el-table-column label="数量" width="150">
+                    <template slot-scope="scope">
+                        <el-input-number 
+                            v-model="scope.row.buyCount" 
+                            :min="1" 
+                            :max="scope.row.stock" 
+                            size="small"
+                            controls-position="right">
+                        </el-input-number>
+                    </template>
+                </el-table-column>
+                <el-table-column label="小计" width="120">
+                    <template slot-scope="scope">
+                        <span style="color: var(--danger-color); font-weight: bold;">
+                            ¥{{ (scope.row.price * scope.row.buyCount).toFixed(2) }}
+                        </span>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" width="80">
+                    <template slot-scope="scope">
+                        <el-button 
+                            type="danger" 
+                            icon="el-icon-delete" 
+                            circle 
+                            size="mini" 
+                            @click="removeFromCart(scope.row.productId)">
+                        </el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+            
+            <div class="cart-total">
+                总计: ¥{{ cartTotal }}
+            </div>
+        </template>
+        
+        <div v-else class="empty-cart">
+            <i class="el-icon-shopping-cart-2 empty-cart-icon"></i>
+            <p>购物车空空如也，快去挑选商品吧~</p>
+        </div>
+        
+        <span slot="footer" class="dialog-footer">
+            <el-button @click="cartDialogVisible = false">继续购物</el-button>
+            <el-button 
+                type="primary" 
+                @click="goCheckout" 
+                :disabled="cart.length === 0"
+                icon="el-icon-wallet">
+                去结算
+            </el-button>
+        </span>
+    </el-dialog>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="../axios.min.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+new Vue({
+    el: '#app',
+    data() {
+        return {
+            products: [],
+            total: 0,
+            pageNum: 1,
+            pageSize: 8,
+            cart: [],
+            cartDialogVisible: false
+        }
+    },
+    computed: {
+        cartTotal() {
+            return this.cart.reduce((sum, item) => sum + item.price * item.buyCount, 0).toFixed(2);
+        }
+    },
+    created() {
+        this.loadProducts();
+        this.loadCart();
+    },
+    methods: {
+        loadProducts() {
+      
+            
+            // 实际项目中使用以下代码
+            
+            axios.get('http://localhost:9000/product/list', {
+                params: { pageNum: this.pageNum, pageSize: this.pageSize }
+            }).then(res => {
+                console.log('产品列表返回：', res.data);
+                if (res.data.code === 200 && Array.isArray(res.data.list)) {
+                    this.products = res.data.list.map(p => ({ ...p, buyCount: 1 }));
+                    this.total = res.data.total;
+                } else {
+                    this.products = [];
+                    this.total = 0;
+                }
+            });
+           
+        },
+        addToCart(product) {
+            const idx = this.cart.findIndex(item => item.productId === product.productId);
+            if (idx > -1) {
+                // 如果商品已在购物车中，增加数量
+                const newCount = this.cart[idx].buyCount + product.buyCount;
+                this.cart[idx].buyCount = Math.min(newCount, product.stock);
+                this.$message.success(`已增加 ${product.productName} 的数量`);
+            } else {
+                // 如果商品不在购物车中，添加新项
+                this.cart.push({ ...product });
+                this.$message.success(`已添加 ${product.productName} 到购物车`);
+            }
+            this.saveCart();
+        },
+        removeFromCart(productId) {
+            const product = this.cart.find(item => item.productId === productId);
+            this.cart = this.cart.filter(item => item.productId !== productId);
+            this.saveCart();
+            this.$message.success(`已移除 ${product.productName}`);
+        },
+        saveCart() {
+            localStorage.setItem('cart', JSON.stringify(this.cart));
+        },
+        loadCart() {
+            const cart = localStorage.getItem('cart');
+            this.cart = cart ? JSON.parse(cart) : [];
+        },
+        goCheckout() {
+            this.saveCart();
+            window.location.href = 'checkout.html';
+        }
+    },
+    watch: {
+        pageNum() {
+            this.loadProducts();
+        }
+    }
+});
+</script>
+</body>
+</html>

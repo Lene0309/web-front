@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单编辑</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background-color: #f5f7ff;
+            color: #2b2d42;
+            line-height: 1.6;
+        }
+        #app {
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 32px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+        }
+        .page-title {
+            font-size: 28px;
+            font-weight: 600;
+            color: #2b2d42;
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .el-form-item {
+            margin-bottom: 24px;
+        }
+        .el-form-item__label {
+            font-size: 1.08rem;
+            color: #333;
+        }
+        .el-input, .el-select {
+            width: 100%;
+        }
+        .el-button + .el-button {
+            margin-left: 18px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <h1 class="page-title">订单编辑</h1>
+        <el-form :model="orderForm" ref="orderForm" label-width="100px">
+            <el-form-item label="订单编号">
+                <el-input v-model="orderForm.orderId" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="用户名">
+                <el-input v-model="orderForm.username" disabled></el-input>
+            </el-form-item>
+            <el-form-item label="收货人">
+                <el-input v-model="orderForm.receiverName"></el-input>
+            </el-form-item>
+            <el-form-item label="联系电话">
+                <el-input v-model="orderForm.receiverPhone"></el-input>
+            </el-form-item>
+            <el-form-item label="收货地址">
+                <el-input v-model="orderForm.shippingAddress"></el-input>
+            </el-form-item>
+            <el-form-item label="订单状态">
+                <el-select v-model="orderForm.status" placeholder="请选择订单状态">
+                    <el-option label="待支付" :value="0"></el-option>
+                    <el-option label="已支付" :value="1"></el-option>
+                    <el-option label="已发货" :value="2"></el-option>
+                    <el-option label="已完成" :value="3"></el-option>
+                    <el-option label="已取消" :value="4"></el-option>
+                </el-select>
+            </el-form-item>
+            <el-form-item label="商品列表">
+                <el-table :data="orderForm.items" style="width: 100%">
+                    <el-table-column prop="productName" label="商品名称"></el-table-column>
+                    <el-table-column prop="categoryName" label="分类"></el-table-column>
+                    <el-table-column prop="currentPrice" label="单价"></el-table-column>
+                    <el-table-column prop="quantity" label="数量"></el-table-column>
+                    <el-table-column prop="totalPrice" label="小计"></el-table-column>
+                </el-table>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="submitForm">保存</el-button>
+                <el-button @click="goBack">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="../axios.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    orderForm: {
+                        orderId: '',
+                        customerId: '',
+                        username: '',
+                        receiverName: '',
+                        receiverPhone: '',
+                        shippingAddress: '',
+                        status: '',
+                        items: [] // 商品项
+                    }
+                }
+            },
+            created() {
+                const id = this.getOrderIdFromUrl();
+                if (id) {
+                    this.fetchOrderDetail(id);
+                }
+            },
+            methods: {
+                getOrderIdFromUrl() {
+                    const params = new URLSearchParams(window.location.search);
+                    return params.get('id');
+                },
+                fetchOrderDetail(id) {
+                    axios.get(`http://localhost:9000/order/detail/${id}`)
+                        .then(res => {
+                            // 适配你的后端结构
+                            let data = null;
+                            if (res.data.ok && res.data.data && res.data.data.data) {
+                                data = res.data.data.data;
+                            } else if (res.data.code === 200 && res.data.data) {
+                                data = res.data.data;
+                            }
+                            if (data) {
+                                // 需要再次请求商品项
+                                this.orderForm = Object.assign({}, this.orderForm, data);
+                                // 获取商品项
+                                this.fetchOrderItems(id);
+                            } else {
+                                this.$message.error(res.data.msg || res.data.message || '获取订单详情失败');
+                            }
+                        })
+                        .catch(() => {
+                            this.$message.error('获取订单详情失败');
+                        });
+                },
+                fetchOrderItems(orderId) {
+                    axios.get(`http://localhost:9000/order/items/${orderId}`)
+                        .then(res => {
+                            let items = [];
+                            // 适配你的后端结构
+                            if (res.data.ok && res.data.data && Array.isArray(res.data.data.data)) {
+                                items = res.data.data.data;
+                            } else if (res.data.code === 200 && Array.isArray(res.data.data)) {
+                                items = res.data.data;
+                            }
+                            this.orderForm.items = items;
+                        });
+                },
+                submitForm() {
+                    // 校验
+                    if (!this.orderForm.customerId) {
+                        this.$message.error('客户ID不能为空');
+                        return;
+                    }
+                    if (!this.orderForm.items || this.orderForm.items.length === 0) {
+                        this.$message.error('商品列表不能为空');
+                        return;
+                    }
+                    axios.post('http://localhost:9000/order/update', this.orderForm)
+                        .then(res => {
+                            if ((res.data.code === 200) || (res.data.ok && res.data.msg === '操作成功')) {
+                                this.$message.success('订单更新成功');
+                                this.goBack();
+                            } else {
+                                this.$message.error(res.data.msg || res.data.message || '订单更新失败');
+                            }
+                        })
+                        .catch(() => {
+                            this.$message.error('订单更新失败');
+                        });
+                },
+                goBack() {
+                    window.location.href = 'orderList.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

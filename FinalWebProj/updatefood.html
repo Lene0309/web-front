@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Food</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+
+    <style type="text/css">
+        .el-icon-food {
+            font-size: 50px; /* 设置字体图标的大小 */
+            height: 80px;
+    
+        }
+
+        body {
+            display: grid;
+            place-items: center; /* 将子元素居中放置 */
+            height: 100vh; /* 让 body 元素占据整个视口高度 */
+            margin: 0; /* 去除 body 默认的边距 */
+            background-image: url("背景5.jpg"); /* 替换 'your-background-image.jpg' 为你的背景图路径 */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* 这个属性使得背景图固定，不随页面滚动而滚动 */
+            background-repeat: no-repeat;
+        }
+
+        /* 定义带边框的容器样式 */
+        .container {
+            border: 2px solid #f5f1f1; /* 设置容器边框 */
+            padding: 20px; /* 添加内边距以确保内容不贴紧边框 */
+            width: 400px; /* 设置容器宽度 */
+            height: 400px; /* 根据内容大小调整高度 */
+            border-radius: 4px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            display: flex; /* 使用 Flexbox 布局 */
+            flex-direction: column; /* 垂直方向布局 */
+            align-items: center; /* 在水平方向上居中 */
+            justify-content: center; /* 在垂直方向上居中 */
+        }
+
+    </style>
+</head>
+<body>
+    <!-- <div id="app">
+        <form action="">
+            <p>菜品名称<input type="text" v-model="foodForm.foodName"/></p>
+            <p>菜品描述<input type="text" v-model="foodForm.description"/></p>
+            <p>菜品价格<input type="text" v-model="foodForm.price"/></p>
+            <p>菜品图片<input type="text" v-model="foodForm.foodPic"/></p>
+            <p><button @click.prevent="updateFood(foodId)">更新菜品</button></p>
+        </form>
+        
+    </div> -->
+
+    <div id="app" class="container" style="display: flex; justify-content: center;">
+        
+        <h1 style="color: rgb(89, 101, 239); font-family: Arial, sans-serif; font-size: 24px;margin-top: -20px;">更新菜品信息</h1>
+        <i class="el-icon-food"></i>
+        <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm">
+            <el-form-item label="菜品名称" prop="foodName" style="margin-left: -60px;">
+              <el-input type="text" v-model="foodForm.foodName"></el-input>
+            </el-form-item>
+            <el-form-item label="菜品描述" prop="description" style="margin-left: -60px;">
+              <el-input type="text" v-model="foodForm.description"></el-input>
+            </el-form-item>
+            <el-form-item label="菜品价格" prop="price" style="margin-left: -60px;">
+                <el-input type="text" v-model="foodForm.price"></el-input>
+            </el-form-item>
+            <el-form-item label="菜品图片" prop="foodPic" style="margin-left: -60px;">
+                <el-input type="text" v-model="foodForm.foodPic"></el-input>
+            </el-form-item>
+            <el-form-item style="margin-left: -30px;margin-bottom: -30px;">
+              <el-button type="primary" @click.prevent="updateFood()">更新菜品</el-button>
+            </el-form-item>
+          </el-form>
+    </div>
+
+    <script src="../axios.min.js"></script>
+    <script src="../vue.js"></script> 
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+
+    <script>
+        axios.defaults.withCredentials = true;
+        // 获取URL参数的函数
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+        new Vue({
+            el:"#app",
+            data:{
+                foodForm:{
+                    foodId:'',
+                    foodName:'',
+                    description:'',
+                    price:'',
+                    foodPic:''
+                },
+               
+            },
+            created(){
+                this.foodForm.foodId = getUrlParameter('id');
+            },
+            methods:{
+                loadFood(){
+                    axios.get("http://localhost:9000/food/list").then(res=>{
+                        if(res.data.isOk){
+								// alert(res.data.msg);
+                                // this.$message('加载数据成功');
+								this.food = res.data.food;
+							}
+                    }) 
+                },
+                updateFood(id){
+                    
+                    axios.get("http://localhost:9000/food/update",{params: this.foodForm}).then(res=>{
+                        alert(res.data.msg);
+                        this.loadFood();
+                        location.href = 'm_foodList.html';
+                    })
+                }
+            }
+        });
+    </script>
+</body>
+</html>

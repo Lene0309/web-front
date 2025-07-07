@@ -1,0 +1,1174 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>物流管理</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css">
+    <style>
+        .app-container {
+            padding: 20px;
+        }
+        .search-container {
+            margin-bottom: 20px;
+        }
+        .pagination-container {
+            margin-top: 20px;
+            text-align: center;
+        }
+        .status-badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-0 { background-color: #909399; } /* 待发货 */
+        .status-1 { background-color: #409EFF; } /* 已发货 */
+        .status-2 { background-color: #E6A23C; } /* 运输中 */
+        .status-3 { background-color: #67C23A; } /* 已签收 */
+        .status-4 { background-color: #F56C6C; } /* 异常 */
+        .detail-table {
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .detail-table td {
+            padding: 8px;
+            border: 1px solid #ebeef5;
+        }
+        .detail-table .label {
+            background-color: #f5f7fa;
+            width: 120px;
+        }
+        body {
+    font-family: "Helvetica Neue", Helvetica, "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    background: linear-gradient(135deg, #e0e7ff 0%, #f0f2f5 100%);
+    color: #333;
+}
+
+.app-container {
+    padding: 30px 5vw;
+    background: #fff;
+    min-height: calc(100vh - 60px);
+    box-shadow: 0 4px 24px rgba(0, 21, 41, 0.10);
+    border-radius: 18px;
+    margin: 30px auto;
+    max-width: 1200px;
+}
+
+.page-title {
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: var(--primary-color);
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+.el-breadcrumb {
+    margin-bottom: 20px;
+}
+
+.quick-search {
+    margin-bottom: 18px;
+}
+
+.search-container {
+    margin-bottom: 18px;
+    background: #f9fafc;
+    padding: 18px 20px 8px 20px;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03);
+}
+
+.toolbar-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 18px;
+}
+
+.table-container {
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 1px 8px rgba(0,0,0,0.04);
+    padding: 10px 0;
+}
+
+.el-table th, .el-table td {
+    font-size: 15px;
+}
+
+.el-table .warning-row {
+    background: #fff7e6 !important;
+}
+
+.el-table .text-danger {
+    color: #F56C6C;
+    font-weight: bold;
+}
+.el-table .text-success {
+    color: #67C23A;
+    font-weight: bold;
+}
+.el-table .text-primary {
+    color: #409EFF;
+    font-weight: bold;
+}
+
+.el-table .action-buttons .el-button {
+    margin: 0 2px;
+}
+
+.pagination-container {
+    margin: 18px 0 0 0;
+    text-align: right;
+}
+
+.card-view {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+    justify-content: flex-start;
+    margin-top: 10px;
+}
+
+.product-card {
+    margin-bottom: 18px;
+}
+
+.el-card {
+    border-radius: 14px !important;
+    box-shadow: 0 2px 12px rgba(64,158,255,0.08);
+    transition: box-shadow 0.2s;
+}
+.el-card:hover {
+    box-shadow: 0 6px 24px rgba(64,158,255,0.18);
+}
+
+.product-image {
+    width: 100%;
+    height: 140px;
+    object-fit: cover;
+    border-radius: 10px;
+    margin-bottom: 10px;
+    transition: transform 0.2s;
+}
+.product-image:hover {
+    transform: scale(1.05);
+}
+
+.product-info {
+    padding: 8px 0 0 0;
+}
+
+.product-meta {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 6px;
+    font-size: 15px;
+}
+
+.product-price {
+    color: #409EFF;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.dialog-footer {
+    text-align: right;
+}
+
+@media (max-width: 900px) {
+    .app-container {
+        padding: 10px 2vw;
+        max-width: 100vw;
+    }
+    .card-view {
+        gap: 10px;
+    }
+    .el-card {
+        width: 95vw !important;
+    }
+}
+    </style>
+</head>
+<body style="margin:0;">
+    <div id="app-layout" style="display: flex; height: 100vh;">
+        <!-- 侧边导航栏 -->
+        <div style="width:220px; min-height:100vh; background:#2d3a4b; display:flex; flex-direction:column; box-shadow:2px 0 8px rgba(0,0,0,0.08);">
+            <div style="height:64px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:bold; letter-spacing:2px;">
+                管理后台
+            </div>
+            <el-menu
+                :default-active="activeMenu"
+                class="el-menu-vertical-demo"
+                background-color="#2d3a4b"
+                text-color="#fff"
+                active-text-color="#ffd04b"
+                style="border-right:none; flex:1;"
+                @select="handleMenuSelect">
+                <el-menu-item index="productList.html">
+                    <i class="el-icon-goods"></i>
+                    <span slot="title">商品管理</span>
+                </el-menu-item>
+                <el-menu-item index="orderList.html">
+                    <i class="el-icon-document"></i>
+                    <span slot="title">订单管理</span>
+                </el-menu-item>
+                <el-menu-item index="CustomerList.html">
+                    <i class="el-icon-user"></i>
+                    <span slot="title">客户管理</span>
+                </el-menu-item>
+                <el-menu-item index="deliveryList.html">
+                    <i class="el-icon-truck"></i>
+                    <span slot="title">配送管理</span>
+                </el-menu-item>
+                <el-menu-item index="stockManagement.html">
+                    <i class="el-icon-box"></i>
+                    <span slot="title">库存管理</span>
+                </el-menu-item>
+                <el-menu-item index="statistics.html">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">销售统计</span>
+                </el-menu-item>
+            </el-menu>
+        </div>
+        <!-- 主内容区 -->
+        <div style="flex:1; display:flex; flex-direction:column; background:#f5f7fa; min-width:0;">
+            <!-- 顶部栏 -->
+            <div style="height: 64px; display: flex; align-items: center; justify-content: flex-end; padding: 0 32px; border-bottom: 1px solid #eee; background:#fff;">
+                <el-dropdown @command="handleCommand">
+                    <span class="el-dropdown-link" style="cursor: pointer;">
+                        <el-avatar icon="el-icon-user-solid"></el-avatar>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+            </div>
+            <!-- 内容区 -->
+            <div style="flex:1; padding:32px; overflow:auto; min-width:0;">
+                <div id="app" class="app-container">
+                    <el-breadcrumb separator="/">
+                        <el-breadcrumb-item :to="{ path: 'managerMenu.html' }">首页</el-breadcrumb-item>
+                        <el-breadcrumb-item>物流管理</el-breadcrumb-item>
+                    </el-breadcrumb>
+                    
+                    <div class="search-container">
+                        <el-form :inline="true" :model="searchForm" class="demo-form-inline">
+                            <el-form-item label="订单号">
+                                <el-input v-model="searchForm.orderId" placeholder="请输入订单号" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="物流单号">
+                                <el-input v-model="searchForm.deliveryNumber" placeholder="请输入物流单号" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="物流公司">
+                                <el-select v-model="searchForm.deliveryCompany" placeholder="请选择物流公司" clearable>
+                                    <el-option label="顺丰速运" value="顺丰速运"></el-option>
+                                    <el-option label="中通快递" value="中通快递"></el-option>
+                                    <el-option label="圆通速递" value="圆通速递"></el-option>
+                                    <el-option label="韵达快递" value="韵达快递"></el-option>
+                                    <el-option label="申通快递" value="申通快递"></el-option>
+                                    <el-option label="京东物流" value="京东物流"></el-option>
+                                    <el-option label="邮政EMS" value="邮政EMS"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="物流状态">
+                                <el-select v-model="searchForm.deliveryStatus" placeholder="请选择物流状态" clearable>
+                                    <el-option label="待发货" :value="0"></el-option>
+                                    <el-option label="已发货" :value="1"></el-option>
+                                    <el-option label="运输中" :value="2"></el-option>
+                                    <el-option label="已签收" :value="3"></el-option>
+                                    <el-option label="异常" :value="4"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="日期范围">
+                                <el-date-picker
+                                    v-model="searchForm.dateRange"
+                                    type="daterange"
+                                    range-separator="至"
+                                    start-placeholder="开始日期"
+                                    end-placeholder="结束日期"
+                                    value-format="yyyy-MM-dd">
+                                </el-date-picker>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="handleSearch">查询</el-button>
+                                <el-button @click="resetSearch">重置</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                    
+                    <div class="toolbar-container">
+                        <el-button type="primary" @click="showAddDialog = true">新增配送</el-button>
+                        <el-button type="danger" @click="handleBatchDelete" :disabled="multipleSelection.length===0">批量删除</el-button>
+                    </div>
+                    
+                    <el-table
+                        :data="deliveryList"
+                        border
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                        <el-table-column
+                          type="selection"
+                          width="55">
+                        </el-table-column>
+                        <el-table-column
+                          prop="orderId"
+                          label="订单号"
+                          width="180">
+                        </el-table-column>
+                        <el-table-column
+                          prop="deliveryCompany"
+                          label="物流公司"
+                          width="120">
+                        </el-table-column>
+                        <el-table-column
+                          prop="deliveryNumber"
+                          label="物流单号"
+                          width="180">
+                        </el-table-column>
+                        <el-table-column
+                          label="物流状态"
+                          width="120">
+                          <template slot-scope="scope">
+                            <span>
+                                <span :class="['status-badge', `status-${scope.row.deliveryStatus}`]"></span>
+                                {{getDeliveryStatusText(scope.row.deliveryStatus)}}
+                            </span>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="deliveryTime"
+                          label="发货时间"
+                          width="180">
+                          <template slot-scope="scope">
+                            {{formatDateTime(scope.row.deliveryTime)}}
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="signTime"
+                          label="签收时间"
+                          width="180">
+                          <template slot-scope="scope">
+                            {{formatDateTime(scope.row.signTime)}}
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          label="操作"
+                          width="220">
+                          <template slot-scope="scope">
+                            <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                            <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                            <el-button size="mini" @click="handleDetail(scope.row)">详情</el-button>
+                            <el-button size="mini" type="primary" @click="handleTrack(scope.row)">物流追踪</el-button>
+                          </template>
+                        </el-table-column>
+                    </el-table>
+                    
+                    <div class="pagination-container">
+                        <el-pagination
+                          @size-change="handleSizeChange"
+                          @current-change="handleCurrentChange"
+                          :current-page="currentPage"
+                          :page-sizes="[10, 20, 30, 50]"
+                          :page-size="pageSize"
+                          layout="total, sizes, prev, pager, next, jumper"
+                          :total="total">
+                        </el-pagination>
+                    </div>
+                    
+                    <!-- 新增配送弹窗 -->
+                    <el-dialog title="新增配送" :visible.sync="showAddDialog" width="50%">
+                      <el-form :model="addForm" label-width="100px" :rules="rules" ref="addForm">
+                        <el-form-item label="订单号" prop="orderId">
+                          <el-input v-model="addForm.orderId"></el-input>
+                        </el-form-item>
+                        <el-form-item label="物流公司" prop="deliveryCompany">
+                          <el-select v-model="addForm.deliveryCompany" placeholder="请选择物流公司">
+                            <el-option label="顺丰速运" value="顺丰速运"></el-option>
+                            <el-option label="中通快递" value="中通快递"></el-option>
+                            <el-option label="圆通速递" value="圆通速递"></el-option>
+                            <el-option label="韵达快递" value="韵达快递"></el-option>
+                            <el-option label="申通快递" value="申通快递"></el-option>
+                            <el-option label="京东物流" value="京东物流"></el-option>
+                            <el-option label="邮政EMS" value="邮政EMS"></el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item label="物流单号" prop="deliveryNumber">
+                          <el-input v-model="addForm.deliveryNumber"></el-input>
+                        </el-form-item>
+                        <el-form-item label="物流状态" prop="deliveryStatus">
+                          <el-select v-model="addForm.deliveryStatus" placeholder="请选择物流状态">
+                            <el-option label="待发货" :value="0"></el-option>
+                            <el-option label="已发货" :value="1"></el-option>
+                            <el-option label="运输中" :value="2"></el-option>
+                            <el-option label="已签收" :value="3"></el-option>
+                            <el-option label="异常" :value="4"></el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item label="收件人姓名" prop="receiverName">
+                          <el-input v-model="addForm.receiverName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="收件人电话" prop="receiverPhone">
+                          <el-input v-model="addForm.receiverPhone"></el-input>
+                        </el-form-item>
+                        <el-form-item label="收货地址" prop="shippingAddress">
+                          <el-input v-model="addForm.shippingAddress"></el-input>
+                        </el-form-item>
+                      </el-form>
+                      <div slot="footer">
+                        <el-button @click="showAddDialog = false">取消</el-button>
+                        <el-button type="primary" @click="submitAdd">保存</el-button>
+                      </div>
+                    </el-dialog>
+                    
+                    <!-- 编辑配送弹窗 -->
+                    <el-dialog title="编辑配送" :visible.sync="editDialogVisible" width="50%">
+                      <el-form :model="editForm" label-width="100px" :rules="rules" ref="editForm">
+                        <el-form-item label="物流ID" prop="deliveryId">
+                          <el-input v-model="editForm.deliveryId" disabled></el-input>
+                        </el-form-item>
+                        <el-form-item label="订单号" prop="orderId">
+                          <el-input v-model="editForm.orderId" disabled></el-input>
+                        </el-form-item>
+                        <el-form-item label="物流公司" prop="deliveryCompany">
+                          <el-select v-model="editForm.deliveryCompany" placeholder="请选择物流公司">
+                            <el-option label="顺丰速运" value="顺丰速运"></el-option>
+                            <el-option label="中通快递" value="中通快递"></el-option>
+                            <el-option label="圆通速递" value="圆通速递"></el-option>
+                            <el-option label="韵达快递" value="韵达快递"></el-option>
+                            <el-option label="申通快递" value="申通快递"></el-option>
+                            <el-option label="京东物流" value="京东物流"></el-option>
+                            <el-option label="邮政EMS" value="邮政EMS"></el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item label="物流单号" prop="deliveryNumber">
+                          <el-input v-model="editForm.deliveryNumber"></el-input>
+                        </el-form-item>
+                        <el-form-item label="物流状态" prop="deliveryStatus">
+                          <el-select v-model="editForm.deliveryStatus" placeholder="请选择物流状态">
+                            <el-option label="待发货" :value="0"></el-option>
+                            <el-option label="已发货" :value="1"></el-option>
+                            <el-option label="运输中" :value="2"></el-option>
+                            <el-option label="已签收" :value="3"></el-option>
+                            <el-option label="异常" :value="4"></el-option>
+                          </el-select>
+                        </el-form-item>
+                        <el-form-item label="收件人姓名" prop="receiverName">
+                          <el-input v-model="editForm.receiverName"></el-input>
+                        </el-form-item>
+                        <el-form-item label="收件人电话" prop="receiverPhone">
+                          <el-input v-model="editForm.receiverPhone"></el-input>
+                        </el-form-item>
+                        <el-form-item label="收货地址" prop="shippingAddress">
+                          <el-input v-model="editForm.shippingAddress"></el-input>
+                        </el-form-item>
+                      </el-form>
+                      <div slot="footer">
+                        <el-button @click="editDialogVisible = false">取消</el-button>
+                        <el-button type="primary" @click="submitEdit">保存</el-button>
+                      </div>
+                    </el-dialog>
+                    
+                    <!-- 物流详情对话框 -->
+                    <el-dialog title="物流详情" :visible.sync="detailDialogVisible" width="60%">
+                        <div v-if="currentDelivery">
+                            <table class="detail-table">
+                                <tr>
+                                    <td class="label">物流ID</td>
+                                    <td>{{currentDelivery.deliveryId}}</td>
+                                    <td class="label">订单号</td>
+                                    <td>{{currentDelivery.orderId}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">物流公司</td>
+                                    <td>{{currentDelivery.deliveryCompany}}</td>
+                                    <td class="label">物流单号</td>
+                                    <td>{{currentDelivery.deliveryNumber}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">物流状态</td>
+                                    <td>
+                                        <el-tag :type="getDeliveryStatusTagType(currentDelivery.deliveryStatus)">
+                                            {{getDeliveryStatusText(currentDelivery.deliveryStatus)}}
+                                        </el-tag>
+                                    </td>
+                                    <td class="label">发货时间</td>
+                                    <td>{{formatDateTime(currentDelivery.deliveryTime)}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">签收时间</td>
+                                    <td>{{formatDateTime(currentDelivery.signTime)}}</td>
+                                    <td class="label">创建时间</td>
+                                    <td>{{formatDateTime(currentDelivery.createTime)}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">更新时间</td>
+                                    <td>{{formatDateTime(currentDelivery.updateTime)}}</td>
+                                    <td class="label">重量(kg)</td>
+                                    <td>{{currentDelivery.weight}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">预计到达时间</td>
+                                    <td>{{formatDateTime(currentDelivery.estimatedArrival)}}</td>
+                                    <td class="label">是否保价</td>
+                                    <td>{{currentDelivery.isInsured ? '是' : '否'}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">保价金额</td>
+                                    <td>{{currentDelivery.insuranceAmount || '无'}}</td>
+                                    <td class="label">最后追踪时间</td>
+                                    <td>{{formatDateTime(currentDelivery.lastTrackTime)}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">收件人姓名</td>
+                                    <td>{{currentDelivery.receiverName}}</td>
+                                    <td class="label">收件人电话</td>
+                                    <td>{{currentDelivery.receiverPhone}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">收货地址</td>
+                                    <td colspan="3">{{currentDelivery.shippingAddress}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">操作人ID</td>
+                                    <td>{{currentDelivery.operatorId}}</td>
+                                    <td class="label">操作人姓名</td>
+                                    <td>{{currentDelivery.operatorName}}</td>
+                                </tr>
+                                <tr>
+                                    <td class="label">备注</td>
+                                    <td colspan="3">{{currentDelivery.remark || '无'}}</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <span slot="footer" class="dialog-footer">
+                            <el-button @click="detailDialogVisible = false">关闭</el-button>
+                        </span>
+                    </el-dialog>
+                    
+                    <!-- 物流追踪对话框 -->
+                    <el-dialog title="物流追踪" :visible.sync="trackDialogVisible" width="60%">
+                        <div v-if="currentDelivery">
+                            <el-descriptions :column="2" border>
+                                <el-descriptions-item label="订单号">{{currentDelivery.orderId}}</el-descriptions-item>
+                                <el-descriptions-item label="物流公司">{{currentDelivery.deliveryCompany}}</el-descriptions-item>
+                                <el-descriptions-item label="物流单号">{{currentDelivery.deliveryNumber}}</el-descriptions-item>
+                                <el-descriptions-item label="当前状态">
+                                    <el-tag :type="getDeliveryStatusTagType(currentDelivery.deliveryStatus)">
+                                        {{getDeliveryStatusText(currentDelivery.deliveryStatus)}}
+                                    </el-tag>
+                                </el-descriptions-item>
+                                <el-descriptions-item label="发货时间">{{formatDateTime(currentDelivery.deliveryTime) || '未发货'}}</el-descriptions-item>
+                                <el-descriptions-item label="签收时间">{{formatDateTime(currentDelivery.signTime) || '未签收'}}</el-descriptions-item>
+                            </el-descriptions>
+                            
+                            <div style="margin-top: 20px;">
+                                <el-timeline>
+                                    <el-timeline-item
+                                        v-for="(track, index) in deliveryTracks"
+                                        :key="index"
+                                        :timestamp="track.time">
+                                        {{track.context}}
+                                    </el-timeline-item>
+                                </el-timeline>
+                            </div>
+                        </div>
+                        <span slot="footer" class="dialog-footer">
+                            <el-button @click="trackDialogVisible = false">关闭</el-button>
+                        </span>
+                    </el-dialog>
+                    
+                    <!-- 批量发货对话框 -->
+                    <el-dialog title="批量发货" :visible.sync="batchDeliveryDialogVisible" width="50%">
+                        <el-form :model="batchDeliveryForm" label-width="120px" :rules="batchRules" ref="batchForm">
+                            <el-form-item label="物流公司" prop="company">
+                                <el-select v-model="batchDeliveryForm.company" placeholder="请选择物流公司" style="width: 100%">
+                                    <el-option label="顺丰速运" value="顺丰速运"></el-option>
+                                    <el-option label="中通快递" value="中通快递"></el-option>
+                                    <el-option label="圆通速递" value="圆通速递"></el-option>
+                                    <el-option label="韵达快递" value="韵达快递"></el-option>
+                                    <el-option label="申通快递" value="申通快递"></el-option>
+                                    <el-option label="京东物流" value="京东物流"></el-option>
+                                    <el-option label="邮政EMS" value="邮政EMS"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="发货时间" prop="deliveryTime">
+                                <el-date-picker
+                                    v-model="batchDeliveryForm.deliveryTime"
+                                    type="datetime"
+                                    placeholder="选择发货时间"
+                                    value-format="yyyy-MM-dd HH:mm:ss"
+                                    style="width: 100%">
+                                </el-date-picker>
+                            </el-form-item>
+                            <el-form-item label="备注" prop="remark">
+                                <el-input type="textarea" v-model="batchDeliveryForm.remark" :rows="2"></el-input>
+                            </el-form-item>
+                            <el-form-item label="待发货订单">
+                                <el-table
+                                    :data="multipleSelection"
+                                    border
+                                    style="width: 100%">
+                                    <el-table-column
+                                      prop="orderId"
+                                      label="订单号"
+                                      width="180">
+                                    </el-table-column>
+                                    <el-table-column
+                                      label="操作"
+                                      width="120">
+                                      <template slot-scope="scope">
+                                        <el-button size="mini" type="danger" @click="removeFromBatch(scope.$index)">移除</el-button>
+                                      </template>
+                                    </el-table-column>
+                                </el-table>
+                            </el-form-item>
+                        </el-form>
+                        <span slot="footer" class="dialog-footer">
+                            <el-button @click="batchDeliveryDialogVisible = false">取消</el-button>
+                            <el-button type="primary" @click="submitBatchDelivery">确认发货</el-button>
+                        </span>
+                    </el-dialog>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- 使用CDN引入所有依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui@2.15.14/lib/index.js"></script>
+    <script src="../axios.min.js"></script>
+    <script>
+        Vue.use(ELEMENT);
+        axios.defaults.baseURL = 'http://localhost:9000';
+        axios.defaults.withCredentials = true;
+        new Vue({
+            el: "#app-layout",
+            data() {
+                return {
+                    activeMenu: 'deliveryList.html',
+                    deliveryList: [],
+                    multipleSelection: [],
+                    searchForm: {
+                        orderId: '',
+                        deliveryNumber: '',
+                        deliveryCompany: '',
+                        deliveryStatus: '',
+                        dateRange: []
+                    },
+                    currentPage: 1,
+                    pageSize: 10,
+                    total: 0,
+                    
+                    // 详情相关
+                    detailDialogVisible: false,
+                    currentDelivery: null,
+                    
+                    // 编辑相关
+                    editDialogVisible: false,
+                    editForm: {
+                        deliveryId: '',
+                        orderId: '',
+                        deliveryCompany: '',
+                        deliveryNumber: '',
+                        deliveryStatus: 0,
+                        deliveryTime: '',
+                        signTime: '',
+                        createTime: '',
+                        updateTime: '',
+                        remark: '',
+                        receiverName: '',
+                        receiverPhone: '',
+                        shippingAddress: '',
+                        weight: 0,
+                        estimatedArrival: '',
+                        isInsured: false,
+                        insuranceAmount: 0,
+                        lastTrackTime: '',
+                        operatorId: '',
+                        operatorName: ''
+                    },
+                    rules: {
+                        deliveryCompany: [
+                            { required: true, message: '请选择物流公司', trigger: 'blur' }
+                        ],
+                        deliveryNumber: [
+                            { required: true, message: '请输入物流单号', trigger: 'blur' }
+                        ],
+                        deliveryStatus: [
+                            { required: true, message: '请选择物流状态', trigger: 'change' }
+                        ],
+                        receiverName: [
+                            { required: true, message: '请输入收件人姓名', trigger: 'blur' }
+                        ],
+                        receiverPhone: [
+                            { required: true, message: '请输入收件人电话', trigger: 'blur' }
+                        ],
+                        shippingAddress: [
+                            { required: true, message: '请输入收货地址', trigger: 'blur' }
+                        ]
+                    },
+                    
+                    // 物流追踪相关
+                    trackDialogVisible: false,
+                    deliveryTracks: [],
+                    
+                    // 批量发货相关
+                    batchDeliveryDialogVisible: false,
+                    batchDeliveryForm: {
+                        company: '',
+                        deliveryTime: '',
+                        remark: ''
+                    },
+                    batchRules: {
+                        company: [
+                            { required: true, message: '请选择物流公司', trigger: 'blur' }
+                        ],
+                        deliveryTime: [
+                            { required: true, message: '请选择发货时间', trigger: 'blur' }
+                        ]
+                    },
+                    showAddDialog: false,
+                    addForm: {
+                        orderId: '',
+                        deliveryCompany: '',
+                        deliveryNumber: '',
+                        deliveryStatus: 0,
+                        receiverName: '',
+                        receiverPhone: '',
+                        shippingAddress: ''
+                    }
+                }
+            },
+            created() {
+                this.getDeliveryList();
+            },
+            methods: {
+                handleMenuSelect(index) {
+                    window.location.href = index;
+                },
+                handleCommand(command) {
+                    if (command === 'logout') {
+                        axios.get("/logout").finally(() => {
+                            localStorage.removeItem('userId');
+                            localStorage.removeItem('username');
+                            window.location.href = 'managerLogin.html';
+                        });
+                    }
+                },
+                async getDeliveryList() {
+                    try {
+                        const params = {
+                            pageNum: this.currentPage,
+                            pageSize: this.pageSize,
+                            orderId: this.searchForm.orderId || undefined,
+                            deliveryNumber: this.searchForm.deliveryNumber || undefined,
+                            deliveryCompany: this.searchForm.deliveryCompany || undefined,
+                            deliveryStatus: this.searchForm.deliveryStatus !== '' ? this.searchForm.deliveryStatus : undefined,
+                            startDate: this.searchForm.dateRange && this.searchForm.dateRange[0] ? this.formatDateForAPI(this.searchForm.dateRange[0]) : undefined,
+                            endDate: this.searchForm.dateRange && this.searchForm.dateRange[1] ? this.formatDateForAPI(this.searchForm.dateRange[1]) : undefined
+                        };
+                        const response = await axios.get("/delivery/list", { params });
+                        
+                        // 适配新的Result<T>格式
+                        if (response.data && response.data.code === 200 && response.data.data) {
+                            this.deliveryList = response.data.data.list || [];
+                            this.total = response.data.data.total || 0;
+                        } else {
+                            this.deliveryList = [];
+                            this.total = 0;
+                            if (response.data && response.data.message) {
+                                this.$message.error(response.data.message);
+                            }
+                        }
+                    } catch (error) {
+                        console.error('获取配送列表失败:', error);
+                        this.$message.error('数据加载失败');
+                        this.deliveryList = [];
+                        this.total = 0;
+                    }
+                },
+                
+                buildQueryParams() {
+                    const params = {
+                        pageNum: this.currentPage,
+                        pageSize: this.pageSize
+                    };
+                    
+                    // 只添加非空参数
+                    if (this.searchForm.orderId) {
+                        params.orderId = this.searchForm.orderId;
+                    }
+                    if (this.searchForm.deliveryNumber) {
+                        params.deliveryNumber = this.searchForm.deliveryNumber;
+                    }
+                    if (this.searchForm.deliveryCompany) {
+                        params.deliveryCompany = this.searchForm.deliveryCompany;
+                    }
+                    if (this.searchForm.deliveryStatus !== undefined) {
+                        params.deliveryStatus = this.searchForm.deliveryStatus;
+                    }
+                    // 处理日期范围 - 转换为startTime和endTime
+                    if (this.searchForm.dateRange && this.searchForm.dateRange.length === 2) {
+                        params.startTime = this.formatDateForAPI(this.searchForm.dateRange[0]);
+                        params.endTime = this.formatDateForAPI(this.searchForm.dateRange[1]);
+                    }
+                    
+                    return params;
+                },
+                
+                formatDateForAPI(dateStr) {
+                    if (!dateStr) return '';
+                    const date = new Date(dateStr);
+                    return date.toISOString();
+                },
+                
+                handleSearch() {
+                    this.currentPage = 1;
+                    this.getDeliveryList();
+                },
+                resetSearch() {
+                    this.searchForm = {
+                        orderId: '',
+                        deliveryNumber: '',
+                        deliveryCompany: '',
+                        deliveryStatus: '',
+                        dateRange: []
+                    };
+                    this.handleSearch();
+                },
+                handleDetail(row) {
+                    this.currentDelivery = row;
+                    this.detailDialogVisible = true;
+                },
+                handleEdit(row) {
+                    this.editForm = JSON.parse(JSON.stringify(row));
+                    this.editDialogVisible = true;
+                },
+                formatDate(date) {
+                    if (!date) return null;
+                    try {
+                        // 处理各种日期格式
+                        if (typeof date === 'string' && date.includes('T')) {
+                            return new Date(date).toISOString();
+                        }
+                        if (typeof date === 'string') {
+                            return new Date(date + 'T00:00:00').toISOString();
+                        }
+                        return new Date(date).toISOString();
+                    } catch (e) {
+                        console.error('日期格式化错误:', e);
+                        return null;
+                    }
+                },
+                async submitEdit() {
+                    try {
+                        await this.$refs.editForm.validate();
+
+                        // 构建请求数据（字段名与后端一致）
+                        const payload = {
+                            deliveryId: this.editForm.deliveryId,
+                            orderId: this.editForm.orderId,
+                            deliveryCompany: this.editForm.deliveryCompany,
+                            deliveryNumber: this.editForm.deliveryNumber,
+                            deliveryStatus: this.editForm.deliveryStatus,
+                            deliveryTime: this.formatDate(this.editForm.deliveryTime),
+                            signTime: this.editForm.deliveryStatus === 3 ? this.formatDate(this.editForm.signTime) : null,
+                            receiverName: this.editForm.receiverName,
+                            receiverPhone: this.editForm.receiverPhone,
+                            shippingAddress: this.editForm.shippingAddress,
+                            weight: this.editForm.weight,
+                            estimatedArrival: this.formatDate(this.editForm.estimatedArrival),
+                            isInsured: this.editForm.isInsured,
+                            insuranceAmount: this.editForm.insuranceAmount,
+                            lastTrackTime: this.formatDate(this.editForm.lastTrackTime),
+                            remark: this.editForm.remark,
+                            operatorId: this.editForm.operatorId,
+                            operatorName: this.editForm.operatorName
+                        };
+
+                        console.log('提交数据:', payload);
+
+                        // 用 PUT 方法
+                        const response = await axios.put("/delivery/update", payload, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        // 适配新的Result<T>格式
+                        if (response.data && response.data.code === 200) {
+                            this.$message.success(response.data.message || '更新成功');
+                            this.editDialogVisible = false;
+                            this.getDeliveryList();
+                        } else {
+                            this.$message.error(response.data?.message || '更新失败');
+                        }
+                    } catch (error) {
+                        console.error('请求错误:', error);
+                        if (error.response) {
+                            this.$message.error(error.response.data?.message || 
+                                              `请求失败(${error.response.status})`);
+                        } else {
+                            this.$message.error(error.message || '网络错误');
+                        }
+                    }
+                },
+                handleTrack(row) {
+                    this.currentDelivery = row;
+                    axios.get("/delivery/track", {  // 修正为正确的API地址
+                        params: {
+                            company: encodeURIComponent(row.deliveryCompany),
+                            number: row.deliveryNumber
+                        }
+                    }).then(res => {
+                        if (res.code === 200) {
+                            this.deliveryTracks = res.data.tracks || [];
+                        } else {
+                            this.deliveryTracks = this.generateMockTracks(row);
+                        }
+                        this.trackDialogVisible = true;
+                    }).catch(error => {
+                        console.error('物流追踪错误:', error);
+                        this.deliveryTracks = this.generateMockTracks(row);
+                        this.trackDialogVisible = true;
+                    });
+                },
+                handleSelectionChange(val) {
+                    this.multipleSelection = val;
+                },
+                handleSizeChange(val) {
+                    this.pageSize = val;
+                    this.getDeliveryList();
+                },
+                handleCurrentChange(val) {
+                    this.currentPage = val;
+                    this.getDeliveryList();
+                },
+                getDeliveryStatusText(status) {
+                    const statusMap = {
+                        0: '待发货',
+                        1: '已发货',
+                        2: '运输中',
+                        3: '已签收',
+                        4: '异常'
+                    };
+                    return statusMap[status] || '未知状态';
+                },
+                getDeliveryStatusTagType(status) {
+                    const typeMap = {
+                        0: 'info',
+                        1: 'primary',
+                        2: 'warning',
+                        3: 'success',
+                        4: 'danger'
+                    };
+                    return typeMap[status] || '';
+                },
+                formatDateTime(date) {
+                    if (!date) return '';
+                    try {
+                        // 处理ISO格式日期
+                        if (typeof date === 'string' && date.includes('T')) {
+                            const d = new Date(date);
+                            return d.toLocaleString('zh-CN');
+                        }
+                        // 处理其他格式
+                        return new Date(date).toLocaleString('zh-CN');
+                    } catch (e) {
+                        console.error('日期解析错误:', e);
+                        return date.toString();
+                    }
+                },
+                generateMockTracks(delivery) {
+                    // 模拟物流追踪数据
+                    const tracks = [];
+                    const now = new Date();
+                    const deliveryTime = new Date(delivery.deliveryTime || now);
+                    
+                    // 根据物流状态生成不同的追踪信息
+                    if (delivery.deliveryStatus >= 1) {
+                        tracks.push({
+                            time: deliveryTime.toLocaleString('zh-CN'),
+                            context: '快递员已揽件'
+                        });
+                        
+                        tracks.push({
+                            time: new Date(deliveryTime.getTime() + 3600000).toLocaleString('zh-CN'),
+                            context: '快件已发往' + (delivery.deliveryCompany || '') + '分拨中心'
+                        });
+                        
+                        if (delivery.deliveryStatus >= 2) {
+                            tracks.push({
+                                time: new Date(deliveryTime.getTime() + 10800000).toLocaleString('zh-CN'),
+                                context: '快件已到达' + (delivery.deliveryCompany || '') + '分拨中心'
+                            });
+                            
+                            tracks.push({
+                                time: new Date(deliveryTime.getTime() + 14400000).toLocaleString('zh-CN'),
+                                context: '快件正在运输途中'
+                            });
+                            
+                            tracks.push({
+                                time: new Date(deliveryTime.getTime() + 21600000).toLocaleString('zh-CN'),
+                                context: '快件已到达目的地城市'
+                            });
+                            
+                            tracks.push({
+                                time: new Date(deliveryTime.getTime() + 25200000).toLocaleString('zh-CN'),
+                                context: '快件正在派送中'
+                            });
+
+                            if (delivery.deliveryStatus >= 3) {
+                                tracks.push({
+                                    time: delivery.signTime ? new Date(delivery.signTime).toLocaleString('zh-CN') : now.toLocaleString('zh-CN'),
+                                    context: '快件已签收，签收人：' + (delivery.receiverName || '本人')
+                                });
+                            } else {
+                                tracks.push({
+                                    time: new Date(deliveryTime.getTime() + 28800000).toLocaleString('zh-CN'),
+                                    context: '快递员正在派件，请保持电话畅通'
+                                });
+                            }
+                        }
+                    } else {
+                        tracks.push({
+                            time: now.toLocaleString('zh-CN'),
+                            context: '商家正在处理订单，等待发货'
+                        });
+                    }
+                    
+                    // 如果是异常状态，添加异常信息
+                    if (delivery.deliveryStatus === 4) {
+                        tracks.push({
+                            time: new Date(deliveryTime.getTime() + 18000000).toLocaleString('zh-CN'),
+                            context: '快件运输异常，原因：' + (delivery.remark || '未知原因')
+                        });
+                    }
+                    
+                    return tracks;
+                },
+                showBatchDeliveryDialog() {
+                    if (this.multipleSelection.length === 0) {
+                        this.$message.warning('请先选择要发货的订单');
+                        return;
+                    }
+                    this.batchDeliveryDialogVisible = true;
+                },
+                removeFromBatch(index) {
+                    this.multipleSelection.splice(index, 1);
+                },
+                async submitBatchDelivery() {
+                    try {
+                        await this.$refs.batchForm.validate();
+                        
+                        const deliveryData = {
+                            company: this.batchDeliveryForm.company,
+                            deliveryTime: this.batchDeliveryForm.deliveryTime,
+                            remark: this.batchDeliveryForm.remark,
+                            orderIds: this.multipleSelection.map(item => item.orderId)
+                        };
+
+                        console.log('批量发货数据:', deliveryData);
+
+                        // 添加更详细的错误处理和日志
+                        const response = await axios.post("/delivery/batchDelivery", deliveryData, {
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        }).catch(error => {
+                            console.error('请求错误详情:', error.response);
+                            throw error;
+                        });
+
+                        console.log('批量发货响应:', response);
+                        
+                        if (response && response.code === 200) {
+                            this.$message.success(response.message || '批量发货成功');
+                            this.batchDeliveryDialogVisible = false;
+                            this.resetBatchForm();
+                            this.getDeliveryList();
+                        } else {
+                            this.$message.error(response?.message || '批量发货失败，未知错误');
+                        }
+                    } catch (error) {
+                        console.error('批量发货完整错误:', error);
+                        const errorMsg = error.response?.data?.message || 
+                                        error.message || 
+                                        '批量发货失败，请检查网络连接';
+                        this.$message.error(errorMsg);
+                    }
+                },
+                resetBatchForm() {
+                    this.batchDeliveryForm = {
+                        company: '',
+                        deliveryTime: '',
+                        remark: ''
+                    };
+                    this.multipleSelection = [];
+                },
+                async submitAdd() {
+                    try {
+                        await this.$refs.addForm.validate();
+                        const payload = { ...this.addForm };
+                        const response = await axios.post('/delivery/create', payload);
+                        if (response.data && response.data.code === 200) {
+                            this.$message.success('新增成功');
+                            this.showAddDialog = false;
+                            this.getDeliveryList();
+                        } else {
+                            this.$message.error(response.data?.message || '新增失败');
+                        }
+                    } catch (error) {
+                        console.error('新增失败:', error);
+                        this.$message.error('请求失败');
+                    }
+                },
+                handleDelete(row) {
+                    this.$confirm('确认删除该配送单吗?', '提示', { type: 'warning' }).then(() => {
+                        axios.delete('/delivery/batchDelete', { data: [row.deliveryId] }).then(res => {
+                            if (res.data && res.data.code === 200) {
+                                this.$message.success('删除成功');
+                                this.getDeliveryList();
+                            } else {
+                                this.$message.error(res.data?.message || '删除失败');
+                            }
+                        }).catch(error => {
+                            console.error('删除失败:', error);
+                            this.$message.error('删除失败');
+                        });
+                    });
+                },
+                handleBatchDelete() {
+                    if (this.multipleSelection.length === 0) {
+                        this.$message.warning('请选择要删除的配送单');
+                        return;
+                    }
+                    const ids = this.multipleSelection.map(item => item.deliveryId);
+                    this.$confirm('确认批量删除选中的配送单吗?', '提示', { type: 'warning' }).then(() => {
+                        axios.delete('/delivery/batchDelete', { data: ids }).then(res => {
+                            if (res.data && res.data.code === 200) {
+                                this.$message.success('批量删除成功');
+                                this.getDeliveryList();
+                                this.multipleSelection = [];
+                            } else {
+                                this.$message.error(res.data?.message || '批量删除失败');
+                            }
+                        }).catch(error => {
+                            console.error('批量删除失败:', error);
+                            this.$message.error('批量删除失败');
+                        });
+                    });
+                }
+            },
+            mounted() {
+                // 激活菜单
+                this.activeMenu = 'deliveryList.html';
+            }
+        });
+    </script>
+</body>
+</html>

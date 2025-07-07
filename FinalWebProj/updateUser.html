@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Users</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style type="text/css">
+        .el-icon-s-custom {
+            font-size: 60px; /* 设置字体图标的大小 */
+            height: 100px;
+    
+        }
+
+        body {
+            display: grid;
+            place-items: center; /* 将子元素居中放置 */
+            height: 100vh; /* 让 body 元素占据整个视口高度 */
+            margin: 0; /* 去除 body 默认的边距 */
+            background-image: url("背景5.jpg"); /* 替换 'your-background-image.jpg' 为你的背景图路径 */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* 这个属性使得背景图固定，不随页面滚动而滚动 */
+            background-repeat: no-repeat;
+        }
+
+        /* 定义带边框的容器样式 */
+        .container {
+            border: 2px solid #f5f1f1; /* 设置容器边框 */
+            padding: 20px; /* 添加内边距以确保内容不贴紧边框 */
+            width: 400px; /* 设置容器宽度 */
+            height: 400px; /* 根据内容大小调整高度 */
+            border-radius: 4px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            display: flex; /* 使用 Flexbox 布局 */
+            flex-direction: column; /* 垂直方向布局 */
+            align-items: center; /* 在水平方向上居中 */
+            justify-content: center; /* 在垂直方向上居中 */
+        }
+
+    </style>
+</head>
+<body>
+    <!-- <div id="app">
+        <form action="">
+            <p>用户名<input type="text" v-model="userForm.userName"/></p>
+            <p>用户密码<input type="text" v-model="userForm.loginPwd"/></p>
+            <p><button @click.prevent="updateUser(userId)">更新用户信息</button></p>
+        </form>
+    </div> -->
+
+    <div id="app" class="container" style="display: flex; justify-content: center;">
+        
+        <h1 style="color: rgb(89, 101, 239); font-family: Arial, sans-serif; font-size: 24px;margin-top: -50px;">更新用户信息</h1>
+        <i class="el-icon-s-custom"></i>
+        <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm">
+            <el-form-item label="用户名" prop="userName" style="margin-left: -60px;">
+              <el-input type="text" v-model="userForm.userName"></el-input>
+            </el-form-item>
+            <el-form-item label="用户密码" prop="loginPwd" style="margin-left: -60px;">
+              <el-input type="text" v-model="userForm.loginPwd"></el-input>
+            </el-form-item>
+            <el-form-item style="margin-left: -30px;margin-bottom: -30px;">
+              <el-button type="primary" @click.prevent="updateUser()">更新用户信息</el-button>
+            </el-form-item>
+          </el-form>
+    </div>
+
+    <script src="../axios.min.js"></script>
+    <script src="../vue.js"></script> 
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+
+    <script>
+        axios.defaults.withCredentials = true;
+        // 获取URL参数的函数
+        function getUrlParameter(name) {
+            name = name.replace(/[\[]/, '\\[').replace(/[\]]/, '\\]');
+            const regex = new RegExp('[\\?&]' + name + '=([^&#]*)');
+            const results = regex.exec(location.search);
+            return results === null ? '' : decodeURIComponent(results[1].replace(/\+/g, ' '));
+        }
+        new Vue({
+            el:"#app",
+            data:{
+                userForm:{
+                    userId:'',
+                    userName:'',
+                    loginPwd:''
+                },
+               
+            },
+            created(){
+                this.userForm.userId = getUrlParameter('id');
+            },
+            methods:{
+                loadUser(){
+                    axios.get("http://localhost:9000/user/list").then(res=>{
+                        if(res.data.isOk){
+								// alert(res.data.msg);
+                                // this.$message('加载数据成功');
+								this.users = res.data.users;
+							}
+                    }) 
+                },
+                updateUser(id){
+                    
+                    axios.get("http://localhost:9000/user/update",{params: this.userForm}).then(res=>{
+                        alert(res.data.msg);
+                        this.loadUser();
+                        location.href = 'userList.html';
+                    })
+                }
+            }
+        });
+    </script>
+</body>
+</html>

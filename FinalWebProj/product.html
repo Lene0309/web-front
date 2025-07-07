@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品详情 - 优品商城</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css">
+    <style>
+        :root {
+            --main-color: #FF5000;
+            --secondary-color: #F5F5F5;
+            --text-color: #333;
+            --light-text: #999;
+        }
+        
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", sans-serif;
+            color: var(--text-color);
+            background-color: #F8F8F8;
+        }
+        
+        .header {
+            background-color: white;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            padding: 15px 0;
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .logo {
+            color: var(--main-color);
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .search-box {
+            width: 500px;
+            border: 2px solid var(--main-color);
+            border-radius: 20px;
+            overflow: hidden;
+        }
+        
+        .search-input {
+            border: none;
+            outline: none;
+            padding: 8px 15px;
+            width: 85%;
+        }
+        
+        .search-btn {
+            background-color: var(--main-color);
+            color: white;
+            border: none;
+            padding: 8px 20px;
+            cursor: pointer;
+        }
+        
+        .nav-link {
+            color: var(--text-color);
+            margin: 0 15px;
+            font-weight: 500;
+        }
+        
+        .nav-link:hover {
+            color: var(--main-color);
+        }
+        
+        .product-container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+        }
+        
+        .product-gallery {
+            width: 400px;
+        }
+        
+        .main-image {
+            width: 100%;
+            height: 400px;
+            object-fit: contain;
+            border: 1px solid #EEE;
+            margin-bottom: 10px;
+        }
+        
+        .thumbnail-container {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .thumbnail {
+            width: 70px;
+            height: 70px;
+            object-fit: cover;
+            border: 1px solid #EEE;
+            cursor: pointer;
+        }
+        
+        .thumbnail.active {
+            border-color: var(--main-color);
+        }
+        
+        .product-info {
+            padding-left: 30px;
+        }
+        
+        .product-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .product-subtitle {
+            color: var(--light-text);
+            font-size: 14px;
+            margin-bottom: 20px;
+        }
+        
+        .price-section {
+            background-color: #FFF8F6;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        
+        .current-price {
+            color: var(--main-color);
+            font-size: 28px;
+            font-weight: bold;
+        }
+        
+        .original-price {
+            text-decoration: line-through;
+            color: var(--light-text);
+            font-size: 16px;
+            margin-left: 10px;
+        }
+        
+        .discount-tag {
+            background-color: var(--main-color);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+        
+        .promotion {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .promotion-tag {
+            background-color: #FFF0E6;
+            color: var(--main-color);
+            padding: 2px 5px;
+            border-radius: 3px;
+            margin-right: 10px;
+        }
+        
+        .selection-item {
+            margin-bottom: 15px;
+        }
+        
+        .selection-title {
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        
+        .selection-options {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .option-btn {
+            border: 1px solid #DDD;
+            padding: 5px 15px;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+        
+        .option-btn.active {
+            border-color: var(--main-color);
+            color: var(--main-color);
+            background-color: #FFF0E6;
+        }
+        
+        .quantity-selector {
+            display: flex;
+            align-items: center;
+        }
+        
+        .quantity-btn {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #DDD;
+            background-color: #F5F5F5;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .quantity-input {
+            width: 50px;
+            height: 30px;
+            border-top: 1px solid #DDD;
+            border-bottom: 1px solid #DDD;
+            border-left: none;
+            border-right: none;
+            text-align: center;
+        }
+        
+        .action-btns {
+            margin-top: 30px;
+            display: flex;
+            gap: 15px;
+        }
+        
+        .add-to-cart {
+            background-color: #FF9500;
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .buy-now {
+            background-color: var(--main-color);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        
+        .product-detail-tabs {
+            margin-top: 30px;
+            border-bottom: 1px solid #EEE;
+        }
+        
+        .tab-item {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        .tab-item.active {
+            color: var(--main-color);
+            border-bottom: 2px solid var(--main-color);
+        }
+        
+        .tab-content {
+            padding: 20px 0;
+        }
+        
+        .detail-image {
+            width: 100%;
+        }
+        
+        .footer {
+            background-color: #333;
+            color: white;
+            padding: 40px 0;
+            margin-top: 50px;
+        }
+        
+        .footer-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        
+        .footer-link {
+            color: #CCC;
+            display: block;
+            margin-bottom: 10px;
+            text-decoration: none;
+        }
+        
+        .footer-link:hover {
+            color: white;
+        }
+        
+        .cart-icon {
+            position: relative;
+            cursor: pointer;
+        }
+        
+        .cart-count {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background-color: var(--main-color);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 顶部导航栏 -->
+        <div class="header">
+            <div class="container">
+                <div class="row align-items-center">
+                    <div class="col-md-2">
+                        <div class="logo">优品商城</div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="d-flex search-box">
+                            <input type="text" class="search-input" placeholder="搜索商品...">
+                            <button class="search-btn">搜索</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="d-flex justify-content-end">
+                            <a href="order.html" class="nav-link">我的订单</a>
+                            <div class="nav-link cart-icon" @click="goToCart">
+                                <i class="el-icon-shopping-cart-2" style="font-size: 20px;"></i>
+                                <span class="cart-count" v-if="cartCount > 0">{{cartCount}}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 商品详情 -->
+        <div class="container">
+            <div class="product-container">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="product-gallery">
+                            <img :src="currentImage" class="main-image">
+                            <div class="thumbnail-container">
+                                <img v-for="(img, index) in product.images" 
+                                     :key="index" 
+                                     :src="img" 
+                                     class="thumbnail" 
+                                     :class="{active: currentImageIndex === index}"
+                                     @click="changeImage(index)">
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-7">
+                        <div class="product-info">
+                            <h1 class="product-title">{{product.name}}</h1>
+                            <div class="product-subtitle">{{product.description}}</div>
+                            
+                            <div class="price-section">
+                                <div>
+                                    <span class="current-price">¥{{product.price}}</span>
+                                    <span class="original-price" v-if="product.originalPrice">¥{{product.originalPrice}}</span>
+                                    <span class="discount-tag" v-if="product.discount">省¥{{(product.originalPrice - product.price).toFixed(2)}}</span>
+                                </div>
+                                <div class="promotion">
+                                    <span class="promotion-tag">促销</span>
+                                    <span>满299减30，满499减50，满999减100</span>
+                                </div>
+                            </div>
+                            
+                            <div class="selection-item">
+                                <div class="selection-title">颜色</div>
+                                <div class="selection-options">
+                                    <div v-for="(color, index) in product.colors" 
+                                         :key="index" 
+                                         class="option-btn" 
+                                         :class="{active: selectedColor === color}"
+                                         @click="selectColor(color)">
+                                        {{color}}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="selection-item">
+                                <div class="selection-title">版本</div>
+                                <div class="selection-options">
+                                    <div v-for="(version, index) in product.versions" 
+                                         :key="index" 
+                                         class="option-btn" 
+                                         :class="{active: selectedVersion === version}"
+                                         @click="selectVersion(version)">
+                                        {{version}}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="selection-item">
+                                <div class="selection-title">数量</div>
+                                <div class="quantity-selector">
+                                    <div class="quantity-btn" @click="decreaseQuantity">-</div>
+                                    <input type="number" class="quantity-input" v-model="quantity" min="1">
+                                    <div class="quantity-btn" @click="increaseQuantity">+</div>
+                                    <span style="margin-left: 10px; font-size: 14px; color: var(--light-text);">库存{{product.stock}}件</span>
+                                </div>
+                            </div>
+                            
+                            <div class="action-btns">
+                                <button class="add-to-cart" @click="addToCart">加入购物车</button>
+                                <button class="buy-now" @click="buyNow">立即购买</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="product-detail-tabs">
+                    <div class="d-flex">
+                        <div class="tab-item active">商品详情</div>
+                        <div class="tab-item">规格参数</div>
+                        <div class="tab-item">包装售后</div>
+                        <div class="tab-item">评价({{product.reviewCount}})</div>
+                    </div>
+                </div>
+                
+                <div class="tab-content">
+                    <img :src="product.detailImage" class="detail-image">
+                </div>
+            </div>
+        </div>
+        
+        <!-- 页脚 -->
+        <div class="footer">
+            <div class="container">
+                <div class="row">
+                    <div class="col-md-3">
+                        <div class="footer-title">购物指南</div>
+                        <a href="#" class="footer-link">购物流程</a>
+                        <a href="#" class="footer-link">会员介绍</a>
+                        <a href="#" class="footer-link">常见问题</a>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="footer-title">配送方式</div>
+                        <a href="#" class="footer-link">上门自提</a>
+                        <a href="#" class="footer-link">211限时达</a>
+                        <a href="#" class="footer-link">配送服务查询</a>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="footer-title">支付方式</div>
+                        <a href="#" class="footer-link">货到付款</a>
+                        <a href="#" class="footer-link">在线支付</a>
+                        <a href="#" class="footer-link">分期付款</a>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="footer-title">售后服务</div>
+                        <a href="#" class="footer-link">售后政策</a>
+                        <a href="#" class="footer-link">价格保护</a>
+                        <a href="#" class="footer-link">退款说明</a>
+                    </div>
+                </div>
+                <div class="text-center mt-4" style="color: #999; font-size: 12px;">
+                    © 2023 优品商城 版权所有
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="../vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="../axios.min.js"></script>
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    cartCount: 2,
+                    currentImageIndex: 0,
+                    selectedColor: '暗紫色',
+                    selectedVersion: '256GB',
+                    quantity: 1,
+                    product: {
+                        id: 1,
+                        name: 'Apple iPhone 16 Pro Max 128GB 暗紫色',
+                        description: 'A16仿生芯片，4800万像素主摄，灵动岛设计，超瓷晶面板',
+                        price: 9899,
+                        originalPrice: 10999,
+                        discount: true,
+                        stock: 125,
+                        reviewCount: 12500,
+                        colors: ['原色', '沙漠色', '白色', '黑色'],
+                        versions: ['128GB', '256GB', '512GB', '1TB'],
+                        images: [
+                            './image/yuanse.png',
+                            './image/shamo.png',
+                            './image/baise.png',
+                            './image/hese.png'
+                        ],
+                       
+                    }
+                }
+            },
+            computed: {
+                currentImage() {
+                    return this.product.images[this.currentImageIndex];
+                }
+            },
+            methods: {
+                changeImage(index) {
+                    this.currentImageIndex = index;
+                },
+                selectColor(color) {
+                    this.selectedColor = color;
+                },
+                selectVersion(version) {
+                    this.selectedVersion = version;
+                },
+                increaseQuantity() {
+                    if (this.quantity < this.product.stock) {
+                        this.quantity++;
+                    } else {
+                        this.$message.warning('已达到最大库存数量');
+                    }
+                },
+                decreaseQuantity() {
+                    if (this.quantity > 1) {
+                        this.quantity--;
+                    }
+                },
+                addToCart() {
+                    this.cartCount++;
+                    this.$message({
+                        message: '已添加到购物车',
+                        type: 'success'
+                    });
+                    // 实际项目中这里应该调用API将商品加入购物车
+                    // axios.post('/cart/add', {
+                    //     productId: this.product.id,
+                    //     color: this.selectedColor,
+                    //     version: this.selectedVersion,
+                    //     quantity: this.quantity
+                    // }).then(...)
+                },
+                buyNow() {
+                    // 实际项目中这里应该跳转到结算页面
+                    window.location.href = 'checkout.html?productId=' + this.product.id + 
+                                         '&color=' + this.selectedColor + 
+                                         '&version=' + this.selectedVersion + 
+                                         '&quantity=' + this.quantity;
+                },
+                goToCart() {
+                    window.location.href = 'cart.html';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>库存管理系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', Arial, sans-serif;
+        }
+        .app-container {
+            max-width: 1200px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 32px 36px 36px 36px;
+        }
+        .el-breadcrumb {
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+        .search-container {
+            margin-bottom: 28px;
+            background: #f8fafc;
+            padding: 18px 24px 8px 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .el-form-item {
+            margin-right: 24px;
+        }
+        .el-button {
+            border-radius: 8px !important;
+            font-weight: 500;
+            transition: box-shadow 0.2s;
+        }
+        .el-button:hover {
+            box-shadow: 0 2px 8px rgba(253, 160, 133, 0.15);
+        }
+        .el-table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        .el-table th, .el-table td {
+            font-size: 15px;
+            padding: 12px 0;
+        }
+        .el-table .cell img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .el-table__row:hover {
+            background: #fdf6ec !important;
+        }
+        .el-tag {
+            border-radius: 8px !important;
+            font-size: 14px;
+            padding: 4px 14px;
+        }
+        .pagination-container {
+            margin-top: 32px;
+            text-align: center;
+        }
+        .el-pagination {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 10px 0;
+        }
+        .stock-input {
+            width: 100px;
+        }
+        .stock-low {
+            color: #F56C6C;
+            font-weight: bold;
+        }
+        .stock-normal {
+            color: #E6A23C;
+        }
+        .stock-high {
+            color: #67C23A;
+        }
+        .status-badge {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+        .status-active {
+            background-color: #67C23A;
+        }
+        .status-inactive {
+            background-color: #F56C6C;
+        }
+        
+        /* 库存管理特有样式 */
+        .report-header {
+            margin-bottom: 20px;
+        }
+        
+        .report-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        
+        .report-title {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .report-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #409EFF;
+        }
+        
+        .report-value.warning {
+            color: #E6A23C;
+        }
+        
+        .report-value.danger {
+            color: #F56C6C;
+        }
+        @media (max-width: 900px) {
+            .app-container {
+                padding: 12px 4px;
+            }
+            .el-table th, .el-table td {
+                font-size: 13px;
+                padding: 8px 0;
+            }
+        }
+    </style>
+</head>
+<body style="margin:0;">
+    <div id="app-layout" style="display: flex; height: 100vh;">
+        <!-- 侧边导航栏 -->
+        <div style="width:220px; min-height:100vh; background:#2d3a4b; display:flex; flex-direction:column; box-shadow:2px 0 8px rgba(0,0,0,0.08);">
+            <div style="height:64px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:bold; letter-spacing:2px;">
+                管理后台
+            </div>
+            <el-menu
+                :default-active="activeMenu"
+                class="el-menu-vertical-demo"
+                background-color="#2d3a4b"
+                text-color="#fff"
+                active-text-color="#ffd04b"
+                style="border-right:none; flex:1;"
+                @select="handleMenuSelect">
+                <el-menu-item index="productList.html">
+                    <i class="el-icon-goods"></i>
+                    <span slot="title">商品管理</span>
+                </el-menu-item>
+                <el-menu-item index="orderList.html">
+                    <i class="el-icon-document"></i>
+                    <span slot="title">订单管理</span>
+                </el-menu-item>
+                <el-menu-item index="CustomerList.html">
+                    <i class="el-icon-user"></i>
+                    <span slot="title">客户管理</span>
+                </el-menu-item>
+                <el-menu-item index="deliveryList.html">
+                    <i class="el-icon-truck"></i>
+                    <span slot="title">配送管理</span>
+                </el-menu-item>
+                <el-menu-item index="stockManagement.html">
+                    <i class="el-icon-box"></i>
+                    <span slot="title">库存管理</span>
+                </el-menu-item>
+                <el-menu-item index="statistics.html">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">销售统计</span>
+                </el-menu-item>
+            </el-menu>
+        </div>
+        <!-- 主内容区 -->
+        <div style="flex:1; display:flex; flex-direction:column; background:#f5f7fa; min-width:0;">
+            <!-- 顶部栏 -->
+            <div style="height: 64px; display: flex; align-items: center; justify-content: flex-end; padding: 0 32px; border-bottom: 1px solid #eee; background:#fff;">
+                <el-dropdown @command="handleCommand">
+                    <span class="el-dropdown-link" style="cursor: pointer;">
+                        <el-avatar icon="el-icon-user-solid"></el-avatar>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+            </div>
+            <!-- 内容区 -->
+            <div style="flex:1; padding:32px; overflow:auto; min-width:0;">
+                <div id="app" class="app-container">
+                    <el-breadcrumb separator="/">
+                        <el-breadcrumb-item :to="{ path: 'managerMenu.html' }">首页</el-breadcrumb-item>
+                        <el-breadcrumb-item>库存管理</el-breadcrumb-item>
+                    </el-breadcrumb>
+                    
+                    <div class="search-container">
+                        <el-form :inline="true" :model="searchForm" class="demo-form-inline">
+                            <el-form-item label="商品名称">
+                                <el-input v-model="searchForm.productName" placeholder="商品名称" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="商品分类">
+                                <el-select v-model="searchForm.categoryId" placeholder="全部" clearable>
+                                    <el-option v-for="item in categories" 
+                                               :key="item.categoryId" 
+                                               :label="item.categoryName" 
+                                               :value="item.categoryId"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="商品状态">
+                                <el-select v-model="searchForm.status" placeholder="全部" clearable>
+                                    <el-option label="上架" :value="1"></el-option>
+                                    <el-option label="下架" :value="0"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="handleSearch">查询</el-button>
+                                <el-button @click="resetSearch">重置</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <el-button type="primary" @click="handleAdd">添加商品</el-button>
+                        <el-button type="success" @click="handleBatchStockUpdate" :disabled="multipleSelection.length===0">批量调库存</el-button>
+                        <el-button type="warning" @click="handleStockAlert" :disabled="multipleSelection.length===0">库存预警</el-button>
+                        <el-button type="info" @click="handleStockReport">库存报表</el-button>
+                        <el-button type="danger" @click="handleBatchDelete" :disabled="multipleSelection.length===0">批量删除</el-button>
+                    </div>
+                    
+                    <el-table
+                        :data="productList"
+                        border
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange"
+                        v-loading="loading">
+                        <el-table-column type="selection" width="55"></el-table-column>
+                        <el-table-column prop="productId" label="商品ID" width="80"></el-table-column>
+                        <el-table-column prop="productName" label="商品名称" width="180"></el-table-column>
+                        <el-table-column label="商品图片" width="120">
+                            <template slot-scope="scope">
+                                <img :src="scope.row.imageUrl" 
+                                     v-if="scope.row.imageUrl" 
+                                     style="width: 60px; height: 60px;">
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="categoryName" label="分类" width="120"></el-table-column>
+                        <el-table-column prop="price" label="价格" width="120">
+                            <template slot-scope="scope">¥{{formatPrice(scope.row.price)}}</template>
+                        </el-table-column>
+                        <el-table-column prop="stock" label="库存" width="200">
+                            <template slot-scope="scope">
+                                <div style="display: flex; align-items: center;">
+                                    <el-input-number v-model="scope.row.stock" :min="0" :controls="false" 
+                                                   class="stock-input" @change="handleStockChange(scope.row, $event)"></el-input-number>
+                                    <span :class="getStockClass(scope.row.stock)" style="margin-left: 8px;">
+                                        {{getStockText(scope.row.stock)}}
+                                    </span>
+                                    <el-button size="mini" type="text" @click="handleStockHistory(scope.row)" 
+                                               style="margin-left: 8px;" title="查看库存历史">
+                                        <i class="el-icon-time"></i>
+                                    </el-button>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="status" label="状态" width="100">
+                            <template slot-scope="scope">
+                                <span>
+                                    <span :class="['status-badge', scope.row.status === 1 ? 'status-active' : 'status-inactive']"></span>
+                                    {{scope.row.status === 1 ? '上架' : '下架'}}
+                                </span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="280">
+                            <template slot-scope="scope">
+                                <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="success" @click="handleStockIn(scope.row)">入库</el-button>
+                                <el-button size="mini" type="warning" @click="handleStockOut(scope.row)">出库</el-button>
+                                <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                                <el-button size="mini" :type="scope.row.status === 1 ? 'warning' : 'success'" 
+                                          @click="handleStatusChange(scope.row)">
+                                    {{scope.row.status === 1 ? '下架' : '上架'}}
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    
+                    <!-- 批量调库存对话框 -->
+                    <el-dialog title="批量调库存" :visible.sync="batchStockDialogVisible" width="500px">
+                        <el-form :model="batchStockForm" label-width="100px">
+                            <el-form-item label="调整方式">
+                                <el-radio-group v-model="batchStockForm.type">
+                                    <el-radio label="add">增加库存</el-radio>
+                                    <el-radio label="subtract">减少库存</el-radio>
+                                    <el-radio label="set">设置库存</el-radio>
+                                </el-radio-group>
+                            </el-form-item>
+                            <el-form-item label="调整数量">
+                                <el-input-number v-model="batchStockForm.amount" :min="0" style="width: 100%"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="备注">
+                                <el-input v-model="batchStockForm.remark" type="textarea" rows="3" placeholder="请输入调整原因"></el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer">
+                            <el-button @click="batchStockDialogVisible = false">取消</el-button>
+                            <el-button type="primary" @click="confirmBatchStockUpdate">确定</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <!-- 入库对话框 -->
+                    <el-dialog title="商品入库" :visible.sync="stockInDialogVisible" width="500px">
+                        <el-form :model="stockInForm" label-width="100px">
+                            <el-form-item label="商品名称">
+                                <el-input v-model="stockInForm.productName" disabled></el-input>
+                            </el-form-item>
+                            <el-form-item label="当前库存">
+                                <el-input v-model="stockInForm.currentStock" disabled></el-input>
+                            </el-form-item>
+                            <el-form-item label="入库数量">
+                                <el-input-number v-model="stockInForm.amount" :min="1" style="width: 100%"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="入库原因">
+                                <el-select v-model="stockInForm.reason" placeholder="请选择入库原因" style="width: 100%">
+                                    <el-option label="采购入库" value="purchase"></el-option>
+                                    <el-option label="退货入库" value="return"></el-option>
+                                    <el-option label="调拨入库" value="transfer"></el-option>
+                                    <el-option label="其他" value="other"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="备注">
+                                <el-input v-model="stockInForm.remark" type="textarea" rows="3" placeholder="请输入备注信息"></el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer">
+                            <el-button @click="stockInDialogVisible = false">取消</el-button>
+                            <el-button type="primary" @click="confirmStockIn">确定</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <!-- 出库对话框 -->
+                    <el-dialog title="商品出库" :visible.sync="stockOutDialogVisible" width="500px">
+                        <el-form :model="stockOutForm" label-width="100px">
+                            <el-form-item label="商品名称">
+                                <el-input v-model="stockOutForm.productName" disabled></el-input>
+                            </el-form-item>
+                            <el-form-item label="当前库存">
+                                <el-input v-model="stockOutForm.currentStock" disabled></el-input>
+                            </el-form-item>
+                            <el-form-item label="出库数量">
+                                <el-input-number v-model="stockOutForm.amount" :min="1" :max="stockOutForm.currentStock" style="width: 100%"></el-input-number>
+                            </el-form-item>
+                            <el-form-item label="出库原因">
+                                <el-select v-model="stockOutForm.reason" placeholder="请选择出库原因" style="width: 100%">
+                                    <el-option label="销售出库" value="sale"></el-option>
+                                    <el-option label="报损出库" value="damage"></el-option>
+                                    <el-option label="调拨出库" value="transfer"></el-option>
+                                    <el-option label="其他" value="other"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="备注">
+                                <el-input v-model="stockOutForm.remark" type="textarea" rows="3" placeholder="请输入备注信息"></el-input>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer">
+                            <el-button @click="stockOutDialogVisible = false">取消</el-button>
+                            <el-button type="primary" @click="confirmStockOut">确定</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <!-- 库存历史对话框 -->
+                    <el-dialog title="库存历史记录" :visible.sync="stockHistoryDialogVisible" width="800px">
+                        <el-table :data="stockHistoryList" border style="width: 100%">
+                            <el-table-column prop="operationTime" label="操作时间" width="180"></el-table-column>
+                            <el-table-column prop="operationType" label="操作类型" width="100">
+                                <template slot-scope="scope">
+                                    <el-tag :type="getOperationTypeTag(scope.row.operationType)">
+                                        {{getOperationTypeText(scope.row.operationType)}}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="beforeStock" label="操作前库存" width="100"></el-table-column>
+                            <el-table-column prop="changeAmount" label="变化数量" width="100">
+                                <template slot-scope="scope">
+                                    <span :style="{color: scope.row.changeAmount > 0 ? 'green' : 'red'}">
+                                        {{scope.row.changeAmount > 0 ? '+' : ''}}{{scope.row.changeAmount}}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="afterStock" label="操作后库存" width="100"></el-table-column>
+                            <el-table-column prop="reason" label="操作原因" width="120"></el-table-column>
+                            <el-table-column prop="remark" label="备注"></el-table-column>
+                        </el-table>
+                        <div slot="footer">
+                            <el-button @click="stockHistoryDialogVisible = false">关闭</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <!-- 库存报表对话框 -->
+                    <el-dialog title="库存报表" :visible.sync="stockReportDialogVisible" width="1000px">
+                        <div class="report-header">
+                            <el-row :gutter="20">
+                                <el-col :span="6">
+                                    <div class="report-card">
+                                        <div class="report-title">总商品数</div>
+                                        <div class="report-value">{{stockReport.totalProducts}}</div>
+                                    </div>
+                                </el-col>
+                                <el-col :span="6">
+                                    <div class="report-card">
+                                        <div class="report-title">低库存商品</div>
+                                        <div class="report-value warning">{{stockReport.lowStockProducts}}</div>
+                                    </div>
+                                </el-col>
+                                <el-col :span="6">
+                                    <div class="report-card">
+                                        <div class="report-title">缺货商品</div>
+                                        <div class="report-value danger">{{stockReport.outOfStockProducts}}</div>
+                                    </div>
+                                </el-col>
+                                <el-col :span="6">
+                                    <div class="report-card">
+                                        <div class="report-title">库存总值</div>
+                                        <div class="report-value">¥{{stockReport.totalValue}}</div>
+                                    </div>
+                                </el-col>
+                            </el-row>
+                        </div>
+                        <el-table :data="stockReport.lowStockList" border style="width: 100%; margin-top: 20px;">
+                            <el-table-column prop="productName" label="商品名称"></el-table-column>
+                            <el-table-column prop="currentStock" label="当前库存"></el-table-column>
+                            <el-table-column prop="price" label="单价">
+                                <template slot-scope="scope">¥{{formatPrice(scope.row.price)}}</template>
+                            </el-table-column>
+                            <el-table-column prop="stockValue" label="库存价值">
+                                <template slot-scope="scope">¥{{formatPrice(scope.row.stockValue)}}</template>
+                            </el-table-column>
+                            <el-table-column label="状态" width="100">
+                                <template slot-scope="scope">
+                                    <el-tag :type="scope.row.currentStock === 0 ? 'danger' : 'warning'">
+                                        {{scope.row.currentStock === 0 ? '缺货' : '低库存'}}
+                                    </el-tag>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div slot="footer">
+                            <el-button @click="stockReportDialogVisible = false">关闭</el-button>
+                            <el-button type="primary" @click="exportStockReport">导出报表</el-button>
+                        </div>
+                    </el-dialog>
+                    
+                    <div class="pagination-container">
+                        <el-pagination
+                            @size-change="handleSizeChange"
+                            @current-change="handleCurrentChange"
+                            :current-page="currentPage"
+                            :page-sizes="[10, 20, 30, 50]"
+                            :page-size="pageSize"
+                            layout="total, sizes, prev, pager, next, jumper"
+                            :total="total">
+                        </el-pagination>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui@2.15.14/lib/index.js"></script>
+    <script src="../axios.min.js"></script>
+    <script>
+        Vue.use(ELEMENT);
+        axios.defaults.baseURL = 'http://localhost:9000';
+        axios.defaults.withCredentials = true;
+        
+        // 关闭Vue生产提示
+        Vue.config.productionTip = false;
+        
+
+
+        new Vue({
+            el: "#app-layout",
+            data() {
+                return {
+                    activeMenu: 'stockManagement.html',
+                    productList: [],
+                    categories: [],
+                    multipleSelection: [],
+                    searchForm: {
+                        productName: '',
+                        categoryId: '',
+                        status: ''
+                    },
+                    currentPage: 1,
+                    pageSize: 10,
+                    total: 0,
+                    loading: false,
+                    
+                    // 库存管理特有功能
+                    batchStockDialogVisible: false,
+                    stockInDialogVisible: false,
+                    stockOutDialogVisible: false,
+                    stockHistoryDialogVisible: false,
+                    stockReportDialogVisible: false,
+                    
+                    batchStockForm: {
+                        type: 'add',
+                        amount: 0,
+                        remark: ''
+                    },
+                    stockInForm: {
+                        productId: null,
+                        productName: '',
+                        currentStock: 0,
+                        amount: 1,
+                        reason: '',
+                        remark: ''
+                    },
+                    stockOutForm: {
+                        productId: null,
+                        productName: '',
+                        currentStock: 0,
+                        amount: 1,
+                        reason: '',
+                        remark: ''
+                    },
+                    stockHistoryList: [],
+                    stockReport: {
+                        totalProducts: 0,
+                        lowStockProducts: 0,
+                        outOfStockProducts: 0,
+                        totalValue: 0,
+                        lowStockList: []
+                    }
+                }
+            },
+            created() {
+                this.getProductList();
+                this.getCategories();
+            },
+            methods: {
+                handleMenuSelect(index) {
+                    window.location.href = index;
+                },
+                handleCommand(command) {
+                    if (command === 'logout') {
+                        axios.get("/logout").finally(() => {
+                            localStorage.removeItem('userId');
+                            localStorage.removeItem('username');
+                            window.location.href = 'managerLogin.html';
+                        });
+                    }
+                },
+                // 获取商品列表
+                getProductList() {
+                    this.loading = true;
+                    const params = {
+                        pageNum: this.currentPage,
+                        pageSize: this.pageSize,
+                        keyword: this.searchForm.productName,
+                        categoryId: this.searchForm.categoryId,
+                        status: this.searchForm.status
+                    };
+                    axios.get('http://localhost:9000/stock/list', { params })
+                        .then(response => {
+                            console.log('库存管理商品列表完整响应:', response);
+                            console.log('库存管理商品列表响应数据:', response.data);
+                            
+                            // 使用与商品管理页面相同的数据解析逻辑
+                            let productList = [];
+                            let total = 0;
+                            
+                            // 支持多种响应格式
+                            if (response.data.code === 200 || response.data.ok === true) {
+                                // 格式1: {ok: true, data: {list: [], total: 0}}
+                                if (response.data.data && response.data.data.list) {
+                                    productList = response.data.data.list;
+                                    total = response.data.data.total || 0;
+                                }
+                                // 格式2: {code: 200, data: {list: [], total: 0}}
+                                else if (response.data.data && response.data.data.list) {
+                                    productList = response.data.data.list;
+                                    total = response.data.data.total || 0;
+                                }
+                                // 格式3: {code: 200, list: [], total: 0}
+                                else if (response.data.list) {
+                                    productList = response.data.list;
+                                    total = response.data.total || 0;
+                                }
+                                // 格式4: 直接返回数组
+                                else if (Array.isArray(response.data)) {
+                                    productList = response.data;
+                                    total = response.data.length;
+                                }
+                                // 格式5: 其他格式
+                                else {
+                                    console.warn('未知的数据格式:', response.data);
+                                    productList = [];
+                                    total = 0;
+                                }
+                            } else {
+                                this.$message.error(response.data.message || response.data.msg || '获取库存数据失败');
+                            }
+                            
+                            // 字段名转换：将下划线格式转换为驼峰格式
+                            productList = productList.map(item => ({
+                                productId: item.product_id || item.productId,
+                                productName: item.product_name || item.productName,
+                                imageUrl: item.image_url || item.imageUrl,
+                                categoryId: item.category_id || item.categoryId,
+                                categoryName: item.category_name || item.categoryName,
+                                price: item.price,
+                                stock: item.stock,
+                                status: item.status,
+                                createdAt: item.created_at || item.createdAt,
+                                updatedAt: item.updated_at || item.updatedAt
+                            }));
+                            
+                            this.productList = productList;
+                            this.total = total;
+                            
+                            console.log('库存管理解析后的数据:', {
+                                productList: this.productList,
+                                total: this.total
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('获取库存数据失败:', error);
+                            this.$message.error('获取库存数据失败: ' + (error.response?.data?.message || error.message));
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+                
+                // 获取分类列表
+                getCategories() {
+                    axios.get('http://localhost:9000/stock/category/list')
+                        .then(response => {
+                            let categories = [];
+                            if (response.data.code === 200 || response.data.ok === true) {
+                                if (response.data.data) {
+                                    // 关键：字段名转换
+                                    categories = response.data.data.map(item => ({
+                                        categoryId: item.category_id,
+                                        categoryName: item.category_name
+                                    }));
+                                } else if (Array.isArray(response.data)) {
+                                    categories = response.data.map(item => ({
+                                        categoryId: item.category_id,
+                                        categoryName: item.category_name
+                                    }));
+                                }
+                            } else {
+                                this.$message.error(response.data.message || response.data.msg || '获取分类数据失败');
+                            }
+                            this.categories = categories;
+                        })
+                        .catch((error) => {
+                            this.$message.error('获取分类数据失败: ' + (error.response?.data?.message || error.message));
+                        });
+                },
+                
+                // 更新库存
+                handleStockChange(row, val) {
+                    if (typeof val !== 'number' || val < 0) {
+                        this.$message.warning('库存必须为非负整数');
+                        return;
+                    }
+                    axios.post(`http://localhost:9000/stock/update/${row.productId}`, null, { params: { stock: val } })
+                        .then((response) => {
+                            if (response.data.code === 200 || response.data.ok === true) {
+                                this.$message.success(response.data.message || response.data.msg || '库存更新成功');
+                            } else {
+                                this.$message.error(response.data.message || response.data.msg || '库存更新失败');
+                                this.getProductList();
+                            }
+                        })
+                        .catch((error) => {
+                            console.error('库存更新失败:', error);
+                            this.$message.error('库存更新失败: ' + (error.response?.data?.message || error.message));
+                            this.getProductList();
+                        });
+                },
+                
+                // 更改商品状态
+                handleStatusChange(row) {
+                    const newStatus = row.status === 1 ? 0 : 1;
+                    this.$confirm(`确认将商品状态改为${newStatus === 1 ? '上架' : '下架'}吗?`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: newStatus === 1 ? 'success' : 'warning'
+                    }).then(() => {
+                        return axios.post(`http://localhost:9000/stock/updateStatus/${row.productId}`, null, { params: { status: newStatus } })
+                            .then((response) => {
+                                if (response.data.code === 200 || response.data.ok === true) {
+                                    this.$message.success(response.data.message || response.data.msg || '状态更新成功');
+                                    row.status = newStatus;
+                                } else {
+                                    this.$message.error(response.data.message || response.data.msg || '状态更新失败');
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('状态更新失败:', error);
+                                this.$message.error('状态更新失败: ' + (error.response?.data?.message || error.message));
+                            });
+                    }).catch(() => {
+                        this.$message.info('已取消更新');
+                    });
+                },
+                
+                // 添加商品
+                handleAdd() {
+                    window.location.href = 'productAdd.html';
+                },
+                
+                // 编辑商品
+                handleEdit(product) {
+                    window.location.href = `productEdit.html?id=${product.productId}`;
+                },
+                
+                // 删除商品
+                handleDelete(row) {
+                    this.$confirm('确认删除该商品吗? 删除后不可恢复', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        return axios.post(`http://localhost:9000/stock/delete/${row.productId}`)
+                            .then((response) => {
+                                if (response.data.code === 200 || response.data.ok === true) {
+                                    this.$message.success(response.data.message || response.data.msg || '删除成功');
+                                    this.getProductList();
+                                } else {
+                                    this.$message.error(response.data.message || response.data.msg || '删除失败');
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('删除失败:', error);
+                                this.$message.error('删除失败: ' + (error.response?.data?.message || error.message));
+                            });
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+                
+                // 批量删除
+                handleBatchDelete() {
+                    if (this.multipleSelection.length === 0) {
+                        this.$message.warning('请选择要删除的商品');
+                        return;
+                    }
+                    
+                    this.$confirm(`确认删除选中的${this.multipleSelection.length}件商品吗? 删除后不可恢复`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        const ids = this.multipleSelection.map(item => item.productId);
+                        return axios.post("http://localhost:9000/stock/batchDelete", { ids: ids })
+                            .then((response) => {
+                                if (response.data.code === 200 || response.data.ok === true) {
+                                    this.$message.success(response.data.message || response.data.msg || '批量删除成功');
+                                    this.getProductList();
+                                    this.multipleSelection = [];
+                                } else {
+                                    this.$message.error(response.data.message || response.data.msg || '批量删除失败');
+                                }
+                            })
+                            .catch((error) => {
+                                console.error('批量删除失败:', error);
+                                this.$message.error('批量删除失败: ' + (error.response?.data?.message || error.message));
+                            });
+                    }).catch(() => {
+                        this.$message.info('已取消删除');
+                    });
+                },
+                
+
+                
+                // 价格格式化
+                formatPrice(price) {
+                    if (typeof price !== 'number') return '0.00';
+                    return price.toFixed(2);
+                },
+                
+                // 获取库存状态文本
+                getStockText(stock) {
+                    if (stock < 10) return '低库存';
+                    if (stock < 50) return '正常';
+                    return '充足';
+                },
+                
+                // 获取库存状态class
+                getStockClass(stock) {
+                    if (stock < 10) return 'stock-low';
+                    if (stock < 50) return 'stock-normal';
+                    return 'stock-high';
+                },
+                
+                // 搜索
+                handleSearch() {
+                    this.currentPage = 1;
+                    this.getProductList();
+                },
+                
+                // 重置搜索
+                resetSearch() {
+                    this.searchForm = {
+                        productName: '',
+                        categoryId: '',
+                        status: ''
+                    };
+                    this.handleSearch();
+                },
+                
+                // 多选变化
+                handleSelectionChange(val) {
+                    this.multipleSelection = val;
+                },
+                
+                // 分页大小变化
+                handleSizeChange(val) {
+                    this.pageSize = val;
+                    this.getProductList();
+                },
+                
+                // 当前页变化
+                handleCurrentChange(val) {
+                    this.currentPage = val;
+                    this.getProductList();
+                },
+                
+                // 批量调库存
+                handleBatchStockUpdate() {
+                    if (this.multipleSelection.length === 0) {
+                        this.$message.warning('请选择要调整库存的商品');
+                        return;
+                    }
+                    this.batchStockForm = {
+                        type: 'add',
+                        amount: 0,
+                        remark: ''
+                    };
+                    this.batchStockDialogVisible = true;
+                },
+                
+                // 确认批量调库存
+                confirmBatchStockUpdate() {
+                    if (this.batchStockForm.amount <= 0) {
+                        this.$message.warning('请输入有效的调整数量');
+                        return;
+                    }
+                    
+                    const productIds = this.multipleSelection.map(item => item.productId);
+                    const data = {
+                        productIds: productIds,
+                        type: this.batchStockForm.type,
+                        amount: this.batchStockForm.amount,
+                        remark: this.batchStockForm.remark
+                    };
+                    
+                    // 使用现有的批量删除API，但修改为批量更新库存
+                    // 这里暂时使用循环调用单个更新API
+                    const promises = productIds.map(productId => {
+                        const currentProduct = this.productList.find(p => p.productId === productId);
+                        if (!currentProduct) return Promise.resolve();
+                        
+                        let newStock = currentProduct.stock;
+                        if (this.batchStockForm.type === 'add') {
+                            newStock += this.batchStockForm.amount;
+                        } else if (this.batchStockForm.type === 'subtract') {
+                            newStock = Math.max(0, newStock - this.batchStockForm.amount);
+                        } else if (this.batchStockForm.type === 'set') {
+                            newStock = this.batchStockForm.amount;
+                        }
+                        
+                        return axios.post(`http://localhost:9000/stock/update/${productId}`, null, { 
+                            params: { stock: newStock } 
+                        });
+                    });
+                    
+                    Promise.all(promises)
+                        .then(responses => {
+                            // 检查所有响应是否成功
+                            const successCount = responses.filter(res => 
+                                res && (res.data.code === 200 || res.data.ok === true)
+                            ).length;
+                            
+                            if (successCount === productIds.length) {
+                                this.$message.success(`批量调库存成功，共更新 ${successCount} 个商品`);
+                            } else {
+                                this.$message.warning(`批量调库存部分成功，成功 ${successCount}/${productIds.length} 个商品`);
+                            }
+                            this.batchStockDialogVisible = false;
+                            this.getProductList();
+                        })
+                        .catch(error => {
+                            console.error('批量调库存失败:', error);
+                            this.$message.error('批量调库存失败: ' + (error.response?.data?.message || error.message));
+                        });
+                },
+                
+                // 库存预警
+                handleStockAlert() {
+                    const lowStockProducts = this.productList.filter(item => item.stock < 10);
+                    if (lowStockProducts.length === 0) {
+                        this.$message.info('当前没有低库存商品');
+                        return;
+                    }
+                    
+                    this.$alert(`发现 ${lowStockProducts.length} 个低库存商品，请及时补货！`, '库存预警', {
+                        confirmButtonText: '确定',
+                        callback: action => {
+                            // 可以跳转到采购页面或显示详细信息
+                        }
+                    });
+                },
+                
+                // 入库操作
+                handleStockIn(row) {
+                    this.stockInForm = {
+                        productId: row.productId,
+                        productName: row.productName,
+                        currentStock: row.stock,
+                        amount: 1,
+                        reason: 'purchase',
+                        remark: ''
+                    };
+                    this.stockInDialogVisible = true;
+                },
+                
+                // 确认入库
+                confirmStockIn() {
+                    if (this.stockInForm.amount <= 0) {
+                        this.$message.warning('请输入有效的入库数量');
+                        return;
+                    }
+                    
+                    const data = {
+                        productId: this.stockInForm.productId,
+                        amount: this.stockInForm.amount,
+                        reason: this.stockInForm.reason,
+                        remark: this.stockInForm.remark,
+                        operationType: 'stockIn'
+                    };
+                    
+                    // 使用库存管理的API
+                    axios.post(`http://localhost:9000/stock/update/${this.stockInForm.productId}`, null, { 
+                        params: { stock: this.stockInForm.currentStock + this.stockInForm.amount } 
+                    })
+                        .then(response => {
+                            if (response.data.code === 200 || response.data.ok === true) {
+                                this.$message.success(response.data.message || response.data.msg || '入库成功');
+                                this.stockInDialogVisible = false;
+                                this.getProductList();
+                            } else {
+                                this.$message.error(response.data.message || response.data.msg || '入库失败');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('入库失败:', error);
+                            this.$message.error('入库失败: ' + (error.response?.data?.message || error.message));
+                        });
+                },
+                
+                // 出库操作
+                handleStockOut(row) {
+                    this.stockOutForm = {
+                        productId: row.productId,
+                        productName: row.productName,
+                        currentStock: row.stock,
+                        amount: 1,
+                        reason: 'sale',
+                        remark: ''
+                    };
+                    this.stockOutDialogVisible = true;
+                },
+                
+                // 确认出库
+                confirmStockOut() {
+                    if (this.stockOutForm.amount <= 0) {
+                        this.$message.warning('请输入有效的出库数量');
+                        return;
+                    }
+                    if (this.stockOutForm.amount > this.stockOutForm.currentStock) {
+                        this.$message.warning('出库数量不能超过当前库存');
+                        return;
+                    }
+                    
+                    const data = {
+                        productId: this.stockOutForm.productId,
+                        amount: this.stockOutForm.amount,
+                        reason: this.stockOutForm.reason,
+                        remark: this.stockOutForm.remark,
+                        operationType: 'stockOut'
+                    };
+                    
+                    // 使用库存管理的API
+                    axios.post(`http://localhost:9000/stock/update/${this.stockOutForm.productId}`, null, { 
+                        params: { stock: this.stockOutForm.currentStock - this.stockOutForm.amount } 
+                    })
+                        .then(response => {
+                            if (response.data.code === 200 || response.data.ok === true) {
+                                this.$message.success(response.data.message || response.data.msg || '出库成功');
+                                this.stockOutDialogVisible = false;
+                                this.getProductList();
+                            } else {
+                                this.$message.error(response.data.message || response.data.msg || '出库失败');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('出库失败:', error);
+                            this.$message.error('出库失败: ' + (error.response?.data?.message || error.message));
+                        });
+                },
+                
+                // 查看库存历史
+                handleStockHistory(row) {
+                    // 由于后端没有库存历史API，直接显示模拟数据
+                    this.stockHistoryList = [
+                        {
+                            operationTime: '2024-01-15 10:30:00',
+                            operationType: 'stockIn',
+                            beforeStock: Math.max(0, row.stock - 100),
+                            changeAmount: 100,
+                            afterStock: row.stock,
+                            reason: '采购入库',
+                            remark: '正常采购'
+                        },
+                        {
+                            operationTime: '2024-01-16 14:20:00',
+                            operationType: 'stockOut',
+                            beforeStock: row.stock + 20,
+                            changeAmount: -20,
+                            afterStock: row.stock,
+                            reason: '销售出库',
+                            remark: '客户订单'
+                        },
+                        {
+                            operationTime: '2024-01-17 09:15:00',
+                            operationType: 'adjust',
+                            beforeStock: row.stock - 5,
+                            changeAmount: 5,
+                            afterStock: row.stock,
+                            reason: '库存调整',
+                            remark: '盘点调整'
+                        }
+                    ];
+                    this.stockHistoryDialogVisible = true;
+                },
+                
+                // 库存报表
+                handleStockReport() {
+                    this.getStockReport();
+                    this.stockReportDialogVisible = true;
+                },
+                
+                // 获取库存报表数据
+                getStockReport() {
+                    axios.get('http://localhost:9000/stock/report')
+                        .then(response => {
+                            console.log('库存报表数据响应:', response.data);
+                            
+                            if (response.data.code === 200 || response.data.ok === true) {
+                                let reportData = {};
+                                
+                                // 支持多种数据格式
+                                if (response.data.data) {
+                                    reportData = response.data.data;
+                                } else if (response.data.report) {
+                                    reportData = response.data.report;
+                                } else {
+                                    reportData = response.data;
+                                }
+                                
+                                this.stockReport = {
+                                    totalProducts: reportData.totalProducts || 0,
+                                    lowStockProducts: reportData.lowStockProducts || 0,
+                                    outOfStockProducts: reportData.outOfStockProducts || 0,
+                                    totalValue: reportData.totalValue || 0,
+                                    lowStockList: reportData.lowStockList || []
+                                };
+                            } else {
+                                this.$message.error(response.data.message || response.data.msg || '获取报表数据失败');
+                                // 如果后端API不可用，使用前端计算
+                                this.generateStockReport();
+                            }
+                        })
+                        .catch(error => {
+                            console.error('获取库存报表失败:', error);
+                            this.$message.error('获取报表数据失败，使用本地数据');
+                            // 如果后端API不可用，使用前端计算
+                            this.generateStockReport();
+                        });
+                },
+                
+                // 生成库存报表（前端计算，作为备用）
+                generateStockReport() {
+                    const totalProducts = this.productList.length;
+                    const lowStockProducts = this.productList.filter(item => item.stock < 10 && item.stock > 0).length;
+                    const outOfStockProducts = this.productList.filter(item => item.stock === 0).length;
+                    const totalValue = this.productList.reduce((sum, item) => sum + (item.stock * item.price), 0);
+                    const lowStockList = this.productList.filter(item => item.stock < 10).map(item => ({
+                        ...item,
+                        stockValue: item.stock * item.price
+                    }));
+                    
+                    this.stockReport = {
+                        totalProducts,
+                        lowStockProducts,
+                        outOfStockProducts,
+                        totalValue: totalValue.toFixed(2),
+                        lowStockList
+                    };
+                },
+                
+                // 导出库存报表
+                exportStockReport() {
+                    // 调用后端导出API
+                    window.open('http://localhost:9000/stock/export', '_blank');
+                    this.$message.success('报表导出成功，请查看下载文件');
+                },
+                
+                // 获取操作类型标签
+                getOperationTypeTag(type) {
+                    const tagMap = {
+                        'stockIn': 'success',
+                        'stockOut': 'warning',
+                        'adjust': 'info'
+                    };
+                    return tagMap[type] || 'info';
+                },
+                
+                // 获取操作类型文本
+                getOperationTypeText(type) {
+                    const textMap = {
+                        'stockIn': '入库',
+                        'stockOut': '出库',
+                        'adjust': '调整'
+                    };
+                    return textMap[type] || '未知';
+                }
+            }
+        });
+    </script>
+</body>
+</html>

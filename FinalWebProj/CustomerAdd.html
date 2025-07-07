@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>添加客户</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+</head>
+<body>
+<div id="app">
+    <el-card class="box-card" style="width: 600px; margin: 50px auto;">
+        <div slot="header">
+            <span>添加客户</span>
+            <el-button style="float: right; padding: 3px 0" type="text" 
+                       @click="goBack">返回</el-button>
+        </div>
+        <el-form :model="customerForm" :rules="rules" ref="customerForm" label-width="100px">
+            <el-form-item label="用户名" prop="username">
+                <el-input v-model="customerForm.username"></el-input>
+            </el-form-item>
+            <el-form-item label="真实姓名" prop="realName">
+                <el-input v-model="customerForm.realName"></el-input>
+            </el-form-item>
+            <el-form-item label="手机号" prop="phone">
+                <el-input v-model="customerForm.phone"></el-input>
+            </el-form-item>
+            <el-form-item label="邮箱" prop="email">
+                <el-input v-model="customerForm.email"></el-input>
+            </el-form-item>
+            <el-form-item>
+                <el-button type="primary" @click="submitForm">提交</el-button>
+                <el-button @click="resetForm">重置</el-button>
+            </el-form-item>
+        </el-form>
+    </el-card>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="../axios.min.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+new Vue({
+    el: '#app',
+    data() {
+        return {
+            customerForm: {
+                username: '',
+                realName: '',
+                phone: '',
+                email: ''
+            },
+            rules: {
+                username: [
+                    { required: true, message: '请输入用户名', trigger: 'blur' },
+                    { min: 3, max: 20, message: '长度在 3 到 20 个字符', trigger: 'blur' },
+                    { validator: this.validateUsername, trigger: 'blur' }
+                ],
+                realName: [
+                    { required: true, message: '请输入真实姓名', trigger: 'blur' }
+                ],
+                phone: [
+                    { pattern: /^1[3-9]\d{9}$/, message: '请输入正确的手机号', trigger: 'blur' }
+                ],
+                email: [
+                    { type: 'email', message: '请输入正确的邮箱地址', trigger: 'blur' }
+                ]
+            }
+        }
+    },
+    methods: {
+        submitForm() {
+            this.$refs.customerForm.validate(valid => {
+                if (valid) {
+                    // 先检查用户名是否已存在
+                    this.checkUsernameExists().then(exists => {
+                        if (exists) {
+                            this.$message.error('用户名已存在，请选择其他用户名');
+                            return;
+                        }
+                        // 用户名不存在，继续提交
+                        this.submitCustomerData();
+                    }).catch(error => {
+                        console.error('检查用户名失败:', error);
+                        // 如果检查失败，直接尝试提交
+                        this.submitCustomerData();
+                    });
+                }
+            });
+        },
+        
+        checkUsernameExists() {
+            return new Promise((resolve, reject) => {
+                axios.get('http://localhost:9000/customer/checkUsername', {
+                    params: { username: this.customerForm.username }
+                }).then(res => {
+                    resolve(res.data.exists || false);
+                }).catch(error => {
+                    reject(error);
+                });
+            });
+        },
+        
+        submitCustomerData() {
+            axios.post('http://localhost:9000/customer/add', this.customerForm)
+                .then(res => {
+                    if (res.data.code === 200) {
+                        this.$message.success(res.data.message);
+                        this.goBack();
+                    } else {
+                        this.$message.error(res.data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('添加客户失败:', error);
+                    let errorMsg = '提交失败';
+                    
+                    if (error.response && error.response.data) {
+                        const data = error.response.data;
+                        if (data.message) {
+                            errorMsg = data.message;
+                        } else if (data.msg) {
+                            errorMsg = data.msg;
+                        } else if (typeof data === 'string') {
+                            errorMsg = data;
+                        }
+                    } else if (error.message) {
+                        errorMsg = error.message;
+                    }
+                    
+                    // 检查是否是用户名重复错误
+                    if (errorMsg.includes('Duplicate entry') || errorMsg.includes('用户名') || errorMsg.includes('已存在')) {
+                        this.$message.error('用户名已存在，请选择其他用户名');
+                    } else {
+                        this.$message.error('提交失败: ' + errorMsg);
+                    }
+                });
+        },
+        validateUsername(rule, value, callback) {
+            if (!value) {
+                callback();
+                return;
+            }
+            
+            // 检查用户名格式
+            if (!/^[a-zA-Z0-9\u4e00-\u9fa5_]{3,20}$/.test(value)) {
+                callback(new Error('用户名只能包含字母、数字、中文和下划线，长度3-20位'));
+                return;
+            }
+            
+            // 检查用户名是否已存在
+            this.checkUsernameExists().then(exists => {
+                if (exists) {
+                    callback(new Error('用户名已存在，请选择其他用户名'));
+                } else {
+                    callback();
+                }
+            }).catch(() => {
+                // 如果检查失败，不阻止提交
+                callback();
+            });
+        },
+        resetForm() {
+            this.$refs.customerForm.resetFields();
+        },
+        goBack() {
+            window.location.href = 'CustomerList.html';
+        }
+    }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>商品编辑</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Arial', sans-serif;
+        }
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 40px 32px 32px 32px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+            border: none;
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 36px;
+            color: #409EFF;
+            font-size: 2.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .el-form-item {
+            margin-bottom: 28px;
+        }
+        .el-form-item__label {
+            font-size: 1.08rem;
+            color: #333;
+        }
+        .el-input, .el-input-number, .el-select {
+            width: 100%;
+        }
+        .avatar-uploader .el-upload {
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: border-color 0.3s;
+            background: #fafbfc;
+        }
+        .avatar-uploader .el-upload:hover {
+            border-color: #409EFF;
+            background: #f0f7ff;
+        }
+        .avatar-uploader-icon {
+            font-size: 32px;
+            color: #bfcbd9;
+            width: 178px;
+            height: 178px;
+            line-height: 178px;
+            text-align: center;
+            transition: color 0.3s;
+        }
+        .avatar {
+            width: 178px;
+            height: 178px;
+            display: block;
+            border-radius: 8px;
+            object-fit: cover;
+            box-shadow: 0 2px 8px rgba(64,158,255,0.08);
+        }
+        .el-upload__tip {
+            text-align: center;
+            color: #909399;
+            font-size: 0.95rem;
+            margin-top: 8px;
+        }
+        .el-radio-group {
+            margin-top: 4px;
+        }
+        .el-button + .el-button {
+            margin-left: 18px;
+        }
+        .loading-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        @media (max-width: 600px) {
+            .container {
+                max-width: 98vw;
+                padding: 18px 4vw 18px 4vw;
+            }
+            .avatar, .avatar-uploader-icon {
+                width: 120px;
+                height: 120px;
+                line-height: 120px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="loading-mask" v-if="loading">
+            <el-progress type="circle" :percentage="50" :width="100"></el-progress>
+        </div>
+        
+        <h2 class="title">编辑商品</h2>
+        <!-- 关键修改1：添加 @submit.native.prevent 阻止表单默认提交 -->
+        <el-form :model="productForm" :rules="rules" ref="productForm" label-width="100px" @submit.native.prevent>
+            <el-form-item label="商品名称" prop="productName">
+                <el-input v-model="productForm.productName" placeholder="请输入商品名称"></el-input>
+            </el-form-item>
+            
+            <el-form-item label="商品分类" prop="categoryId">
+                <el-select v-model="productForm.categoryId" placeholder="请选择分类">
+                    <el-option v-for="item in categories" 
+                               :key="item.categoryId" 
+                               :label="item.categoryName" 
+                               :value="item.categoryId">
+                    </el-option>
+                </el-select>
+            </el-form-item>
+            
+            <el-form-item label="商品价格" prop="price">
+                <el-input-number v-model="productForm.price" :min="0" :precision="2" :step="0.1" style="width: 100%"></el-input-number>
+            </el-form-item>
+            
+            <el-form-item label="商品库存" prop="stock">
+                <el-input-number v-model="productForm.stock" :min="0" style="width: 100%"></el-input-number>
+            </el-form-item>
+            
+            <el-form-item label="商品状态" prop="status">
+                <el-radio-group v-model="productForm.status">
+                    <el-radio :label="1">上架</el-radio>
+                    <el-radio :label="0">下架</el-radio>
+                </el-radio-group>
+            </el-form-item>
+            
+            <el-form-item label="商品图片" prop="imageUrl">
+                <!-- 关键修改2：使用自定义上传方法 -->
+                <el-upload
+                    class="avatar-uploader"
+                    action="#"
+                    :auto-upload="false"
+                    :show-file-list="false"
+                    :on-change="handleFileChange"
+                    :before-upload="beforeAvatarUpload">
+                    <img v-if="productForm.imageUrl" :src="productForm.imageUrl" class="avatar">
+                    <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+                </el-upload>
+                <div class="el-upload__tip">只能上传jpg/png/gif文件，且不超过2MB</div>
+            </el-form-item>
+            
+            <el-form-item>
+                <!-- 关键修改3：添加 prevent 阻止默认行为 -->
+                <el-button type="primary" @click.prevent="submitForm" :loading="submitting">保存</el-button>
+                <el-button @click.prevent="goBack">取消</el-button>
+            </el-form-item>
+        </el-form>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="../axios.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    
+    <script>
+        function getUrlParam(name) {
+            const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            const r = window.location.search.substr(1).match(reg);
+            if (r != null) return decodeURIComponent(r[2]);
+            return null;
+        }
+
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    productForm: {
+                        productId: null,
+                        productName: '',
+                        categoryId: null,
+                        price: 0,
+                        stock: 0,
+                        status: 1,
+                        imageUrl: ''
+                    },
+                    categories: [],
+                    rules: {
+                        productName: [
+                            { required: true, message: '请输入商品名称', trigger: 'blur' },
+                            { min: 2, max: 50, message: '长度在 2 到 50 个字符', trigger: 'blur' }
+                        ],
+                        categoryId: [
+                            { required: true, message: '请选择商品分类', trigger: 'change' }
+                        ],
+                        price: [
+                            { required: true, message: '请输入商品价格', trigger: 'blur' },
+                            { type: 'number', message: '价格必须为数字', trigger: 'blur' }
+                        ],
+                        stock: [
+                            { required: true, message: '请输入商品库存', trigger: 'blur' },
+                            { type: 'integer', message: '库存必须为整数', trigger: 'blur' }
+                        ]
+                    },
+                    loading: false,
+                    submitting: false,
+                    currentFile: null  // 新增：保存当前文件对象
+                }
+            },
+            created() {
+                const productId = getUrlParam('id');
+                if (!productId) {
+                    this.$message.error('缺少商品ID参数');
+                    this.goBack();
+                    return;
+                }
+                
+                this.productForm.productId = productId;
+                this.loadData();
+            },
+            methods: {
+                async loadData() {
+                    this.loading = true;
+                    try {
+                        await this.loadCategories();
+                        await this.loadProduct();
+                    } catch (error) {
+                        this.$message.error('数据加载失败');
+                        console.error('数据加载失败:', error);
+                    } finally {
+                        this.loading = false;
+                    }
+                },
+                
+                loadCategories() {
+                    return axios.get('http://localhost:9000/product/category/list')
+                        .then(response => {
+                            if (response.data.code === 200) {
+                                // categoryId 全部转字符串
+                                this.categories = (response.data.data || []).map(item => ({
+                                    ...item,
+                                    categoryId: String(item.categoryId)
+                                }));
+                            } else {
+                                this.$message.error(response.data.message);
+                                throw new Error('加载分类失败');
+                            }
+                        });
+                },
+                
+                loadProduct() {
+                    return axios.get(`http://localhost:9000/product/detail/${this.productForm.productId}`)
+                        .then(response => {
+                            if (response.data.code === 200 && response.data.data) {
+                                const productData = response.data.data;
+                                // categoryId 转字符串
+                                this.productForm = {
+                                    ...this.productForm,
+                                    productName: productData.productName || '',
+                                    categoryId: productData.categoryId !== undefined && productData.categoryId !== null ? String(productData.categoryId) : null,
+                                    price: productData.price || 0,
+                                    stock: productData.stock || 0,
+                                    status: productData.status || 1,
+                                    imageUrl: productData.imageUrl || ''
+                                };
+                                console.log('接口返回', productData);
+                                console.log('赋值后', this.productForm);
+                            } else {
+                                this.$message.error(response.data.message || '商品数据为空');
+                                throw new Error('加载商品失败');
+                            }
+                        });
+                },
+                
+                submitForm() {
+                    this.$refs.productForm.validate(valid => {
+                        if (valid) {
+                            this.submitting = true;
+                            
+                            // 如果有新文件需要上传，先上传文件
+                            if (this.currentFile) {
+                                this.uploadFile().then(() => {
+                                    this.saveProduct();
+                                }).catch(() => {
+                                    this.submitting = false;
+                                });
+                            } else {
+                                this.saveProduct();
+                            }
+                        } else {
+                            this.$message.error('请填写完整的表单信息');
+                        }
+                    });
+                },
+                
+                saveProduct() {
+                    // 检查来源页面，决定使用哪个接口
+                    const referrer = document.referrer;
+                    const apiUrl = referrer.includes('stockManagement.html') 
+                        ? 'http://localhost:9000/stock/edit' 
+                        : 'http://localhost:9000/product/update';
+                    
+                    axios.post(apiUrl, this.productForm)
+                        .then(response => {
+                            if (response.data.code === 200) {
+                                this.$message.success('商品更新成功');
+                                // 根据来源页面决定跳转
+                                const referrer = document.referrer;
+                                if (referrer.includes('stockManagement.html')) {
+                                    window.location.href = 'stockManagement.html';
+                                } else {
+                                this.goBack();
+                                }
+                            } else {
+                                this.$message.error(response.data.message);
+                            }
+                        })
+                        .catch(error => {
+                            this.$message.error('更新商品失败');
+                            console.error('保存失败:', error);
+                        })
+                        .finally(() => {
+                            this.submitting = false;
+                        });
+                },
+                
+                goBack() {
+                    // 检查来源页面，决定跳转目标
+                    const referrer = document.referrer;
+                    if (referrer.includes('stockManagement.html')) {
+                        window.location.href = 'stockManagement.html';
+                    } else {
+                    window.location.href = 'productList.html';
+                    }
+                },
+                
+                // 关键修改4：使用 on-change 处理文件选择
+                handleFileChange(file, fileList) {
+                    this.currentFile = file.raw;
+                    // 创建预览图
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        this.productForm.imageUrl = e.target.result;
+                    };
+                    reader.readAsDataURL(this.currentFile);
+                    
+                    // 验证文件
+                    if (!this.beforeAvatarUpload(this.currentFile)) {
+                        this.currentFile = null;
+                        return false;
+                    }
+                    return false;
+                },
+                
+                // 关键修改5：单独的文件上传方法
+                uploadFile() {
+                    return new Promise((resolve, reject) => {
+                        const formData = new FormData();
+                        formData.append('file', this.currentFile);
+                        
+                        axios.post('http://localhost:9000/product/upload', formData, {
+                            headers: { 'Content-Type': 'multipart/form-data' }
+                        }).then(response => {
+                            if (response.data.code === 200) {
+                                this.productForm.imageUrl = response.data.data.url;
+                                this.$message.success('图片上传成功');
+                                resolve();
+                            } else {
+                                this.$message.error(response.data.message || '上传失败');
+                                reject();
+                            }
+                        }).catch(e => {
+                            this.$message.error('上传失败');
+                            reject();
+                        });
+                    });
+                },
+                
+                beforeAvatarUpload(file) {
+                    const isImage = file.type === 'image/jpeg' || file.type === 'image/png' || file.type === 'image/gif';
+                    const isLt2M = file.size / 1024 / 1024 < 2;
+                    
+                    if (!isImage) {
+                        this.$message.error('只能上传JPG/PNG/GIF图片!');
+                        return false;
+                    }
+                    if (!isLt2M) {
+                        this.$message.error('图片大小不能超过2MB!');
+                        return false;
+                    }
+                    
+                    return true;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

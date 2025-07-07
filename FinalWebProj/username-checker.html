@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>用户名检查工具</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Arial', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+        }
+        .check-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #e4e7ed;
+            border-radius: 8px;
+        }
+        .check-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #409EFF;
+            margin-bottom: 15px;
+        }
+        .result-box {
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-weight: 500;
+        }
+        .result-success {
+            background: #f0f9ff;
+            color: #67C23A;
+            border: 1px solid #b3d8ff;
+        }
+        .result-error {
+            background: #fef0f0;
+            color: #F56C6C;
+            border: 1px solid #fbc4c4;
+        }
+        .result-warning {
+            background: #fdf6ec;
+            color: #E6A23C;
+            border: 1px solid #f5dab1;
+        }
+        .existing-users {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid #e4e7ed;
+            border-radius: 6px;
+            padding: 10px;
+            background: #fafafa;
+        }
+        .user-item {
+            padding: 8px;
+            border-bottom: 1px solid #e4e7ed;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .user-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <h1 style="text-align: center; color: #409EFF; margin-bottom: 30px;">用户名检查工具</h1>
+        
+        <div class="check-section">
+            <div class="check-title">🔍 检查用户名可用性</div>
+            <el-form :model="checkForm" label-width="100px">
+                <el-form-item label="用户名">
+                    <el-input 
+                        v-model="checkForm.username" 
+                        placeholder="输入要检查的用户名"
+                        @blur="checkUsername"
+                        @keyup.enter.native="checkUsername">
+                        <el-button slot="append" @click="checkUsername" :loading="checking">
+                            检查
+                        </el-button>
+                    </el-input>
+                </el-form-item>
+            </el-form>
+            
+            <div v-if="checkResult" class="result-box" :class="resultClass">
+                <div v-if="checkResult.available">
+                    ✅ 用户名可用
+                </div>
+                <div v-else>
+                    ❌ 用户名已存在
+                </div>
+                <div style="margin-top: 10px; font-size: 14px;">
+                    <div>用户名: {{ checkResult.username }}</div>
+                    <div>检查时间: {{ checkResult.time }}</div>
+                    <div v-if="checkResult.suggestion">建议: {{ checkResult.suggestion }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="check-section">
+            <div class="check-title">📋 现有用户名列表</div>
+            <el-button type="primary" @click="loadExistingUsers" :loading="loadingUsers">
+                刷新用户列表
+            </el-button>
+            
+            <div v-if="existingUsers.length > 0" class="existing-users" style="margin-top: 15px;">
+                <div v-for="user in existingUsers" :key="user.customerId" class="user-item">
+                    <div>
+                        <strong>{{ user.username }}</strong>
+                        <span style="color: #909399; margin-left: 10px;">ID: {{ user.customerId }}</span>
+                    </div>
+                    <div style="color: #909399; font-size: 12px;">
+                        {{ user.realName || '未设置姓名' }}
+                    </div>
+                </div>
+            </div>
+            <div v-else-if="!loadingUsers" style="text-align: center; color: #909399; margin-top: 15px;">
+                暂无用户数据
+            </div>
+        </div>
+        
+        <div class="check-section">
+            <div class="check-title">🔧 用户名生成建议</div>
+            <el-form :model="suggestionForm" label-width="100px">
+                <el-form-item label="基础名称">
+                    <el-input 
+                        v-model="suggestionForm.baseName" 
+                        placeholder="输入基础名称，如：张三"
+                        @keyup.enter.native="generateSuggestions">
+                    </el-input>
+                </el-form-item>
+                <el-form-item>
+                    <el-button type="primary" @click="generateSuggestions">
+                        生成建议用户名
+                    </el-button>
+                </el-form-item>
+            </el-form>
+            
+            <div v-if="suggestions.length > 0" style="margin-top: 15px;">
+                <h4>建议的用户名:</h4>
+                <el-tag 
+                    v-for="suggestion in suggestions" 
+                    :key="suggestion"
+                    style="margin: 5px; cursor: pointer;"
+                    @click="useSuggestion(suggestion)">
+                    {{ suggestion }}
+                </el-tag>
+            </div>
+        </div>
+        
+        <div class="check-section">
+            <div class="check-title">📝 操作按钮</div>
+            <el-button type="primary" @click="goToCustomerAdd">去添加客户</el-button>
+            <el-button type="success" @click="goToCustomerList">客户列表</el-button>
+            <el-button type="warning" @click="clearData">清除数据</el-button>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="../axios.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    
+    <script>
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    checkForm: {
+                        username: ''
+                    },
+                    checkResult: null,
+                    checking: false,
+                    existingUsers: [],
+                    loadingUsers: false,
+                    suggestionForm: {
+                        baseName: ''
+                    },
+                    suggestions: []
+                }
+            },
+            computed: {
+                resultClass() {
+                    if (!this.checkResult) return '';
+                    return this.checkResult.available ? 'result-success' : 'result-error';
+                }
+            },
+            methods: {
+                checkUsername() {
+                    if (!this.checkForm.username.trim()) {
+                        this.$message.warning('请输入用户名');
+                        return;
+                    }
+                    
+                    this.checking = true;
+                    axios.get('http://localhost:9000/customer/checkUsername', {
+                        params: { username: this.checkForm.username }
+                    }).then(res => {
+                        const exists = res.data.exists || false;
+                        this.checkResult = {
+                            username: this.checkForm.username,
+                            available: !exists,
+                            time: new Date().toLocaleString(),
+                            suggestion: exists ? this.generateSuggestion(this.checkForm.username) : null
+                        };
+                    }).catch(error => {
+                        console.error('检查用户名失败:', error);
+                        this.$message.error('检查用户名失败: ' + (error.response?.data?.message || error.message));
+                    }).finally(() => {
+                        this.checking = false;
+                    });
+                },
+                
+                loadExistingUsers() {
+                    this.loadingUsers = true;
+                    axios.get('http://localhost:9000/customer/list', {
+                        params: { pageNum: 1, pageSize: 100 }
+                    }).then(res => {
+                        if (res.data.code === 200 && res.data.data) {
+                            this.existingUsers = res.data.data.list || [];
+                        } else {
+                            this.existingUsers = [];
+                        }
+                    }).catch(error => {
+                        console.error('加载用户列表失败:', error);
+                        this.$message.error('加载用户列表失败');
+                        this.existingUsers = [];
+                    }).finally(() => {
+                        this.loadingUsers = false;
+                    });
+                },
+                
+                generateSuggestions() {
+                    if (!this.suggestionForm.baseName.trim()) {
+                        this.$message.warning('请输入基础名称');
+                        return;
+                    }
+                    
+                    const baseName = this.suggestionForm.baseName.trim();
+                    const suggestions = [];
+                    
+                    // 生成不同的用户名建议
+                    suggestions.push(baseName + '1');
+                    suggestions.push(baseName + '2');
+                    suggestions.push(baseName + '2024');
+                    suggestions.push(baseName + '_user');
+                    suggestions.push(baseName + '001');
+                    suggestions.push(baseName + Math.floor(Math.random() * 1000));
+                    
+                    this.suggestions = suggestions;
+                },
+                
+                generateSuggestion(username) {
+                    const suggestions = [
+                        username + '1',
+                        username + '2',
+                        username + '_new',
+                        username + '2024',
+                        username + Math.floor(Math.random() * 1000)
+                    ];
+                    return '建议使用: ' + suggestions[0];
+                },
+                
+                useSuggestion(suggestion) {
+                    this.checkForm.username = suggestion;
+                    this.checkUsername();
+                },
+                
+                goToCustomerAdd() {
+                    window.location.href = 'CustomerAdd.html';
+                },
+                
+                goToCustomerList() {
+                    window.location.href = 'CustomerList.html';
+                },
+                
+                clearData() {
+                    this.checkForm.username = '';
+                    this.checkResult = null;
+                    this.suggestions = [];
+                    this.suggestionForm.baseName = '';
+                    this.$message.success('数据已清除');
+                }
+            },
+            mounted() {
+                this.loadExistingUsers();
+            }
+        });
+    </script>
+</body>
+</html> 

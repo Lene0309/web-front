@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nikki.finalproject.mapper.DeliveryMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="DeliveryResultMap" type="com.nikki.finalproject.entity.Delivery">
+        <id column="delivery_id" property="deliveryId" jdbcType="VARCHAR"/>
+        <result column="order_id" property="orderId" jdbcType="VARCHAR"/>
+        <result column="delivery_company" property="deliveryCompany" jdbcType="VARCHAR"/>
+        <result column="delivery_number" property="deliveryNumber" jdbcType="VARCHAR"/>
+        <result column="delivery_status" property="deliveryStatus" jdbcType="INTEGER"/>
+        <result column="create_time" property="createTime" jdbcType="TIMESTAMP"/>
+        <result column="update_time" property="updateTime" jdbcType="TIMESTAMP"/>
+    </resultMap>
+
+    <!-- 根据订单ID查询配送信息 -->
+    <select id="selectByOrderId" resultMap="DeliveryResultMap">
+        SELECT 
+            d.delivery_id,
+            d.order_id,
+            d.delivery_company,
+            d.delivery_number,
+            d.delivery_status,
+            d.create_time,
+            d.update_time
+        FROM delivery d
+        WHERE d.order_id = #{orderId}
+    </select>
+
+    <!-- 插入配送信息 -->
+    <insert id="insert" parameterType="com.nikki.finalproject.entity.Delivery">
+        INSERT INTO delivery (
+            delivery_id,
+            order_id,
+            delivery_company,
+            delivery_number,
+            delivery_status,
+            create_time,
+            update_time
+        ) VALUES (
+            #{deliveryId},
+            #{orderId},
+            #{deliveryCompany},
+            #{deliveryNumber},
+            #{deliveryStatus},
+            NOW(),
+            NOW()
+        )
+    </insert>
+
+    <!-- 更新配送信息 -->
+    <update id="update" parameterType="com.nikki.finalproject.entity.Delivery">
+        UPDATE delivery
+        SET 
+            delivery_company = #{deliveryCompany},
+            delivery_number = #{deliveryNumber},
+            delivery_status = #{deliveryStatus},
+            update_time = NOW()
+        WHERE delivery_id = #{deliveryId}
+    </update>
+
+    <!-- 查询配送列表 -->
+    <select id="selectDeliveryList" resultMap="DeliveryResultMap">
+        SELECT 
+            d.delivery_id,
+            d.order_id,
+            d.delivery_company,
+            d.delivery_number,
+            d.delivery_status,
+            d.create_time,
+            d.update_time
+        FROM delivery d
+        <where>
+            <if test="orderId != null and orderId != ''">
+                AND d.order_id LIKE CONCAT('%', #{orderId}, '%')
+            </if>
+            <if test="deliveryNumber != null and deliveryNumber != ''">
+                AND d.delivery_number LIKE CONCAT('%', #{deliveryNumber}, '%')
+            </if>
+            <if test="deliveryCompany != null and deliveryCompany != ''">
+                AND d.delivery_company LIKE CONCAT('%', #{deliveryCompany}, '%')
+            </if>
+            <if test="deliveryStatus != null">
+                AND d.delivery_status = #{deliveryStatus}
+            </if>
+        </where>
+        ORDER BY d.create_time DESC
+        LIMIT #{offset}, #{pageSize}
+    </select>
+
+    <!-- 统计配送总数 -->
+    <select id="countDeliveryList" resultType="int">
+        SELECT COUNT(*)
+        FROM delivery d
+        <where>
+            <if test="orderId != null and orderId != ''">
+                AND d.order_id LIKE CONCAT('%', #{orderId}, '%')
+            </if>
+            <if test="deliveryNumber != null and deliveryNumber != ''">
+                AND d.delivery_number LIKE CONCAT('%', #{deliveryNumber}, '%')
+            </if>
+            <if test="deliveryCompany != null and deliveryCompany != ''">
+                AND d.delivery_company LIKE CONCAT('%', #{deliveryCompany}, '%')
+            </if>
+            <if test="deliveryStatus != null">
+                AND d.delivery_status = #{deliveryStatus}
+            </if>
+        </where>
+    </select>
+
+</mapper> 

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Menu</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style type="text/css">
+        .el-icon-knife-fork {
+            font-size: 100px; /* 设置字体图标的大小 */
+        }
+
+        body {
+            display: grid;
+            place-items: center; /* 将子元素居中放置 */
+            height: 100vh; /* 让 body 元素占据整个视口高度 */
+            margin: 0; /* 去除 body 默认的边距 */
+            background: linear-gradient(135deg, #e0ecff 0%, #c3e0fa 100%); /* 淡蓝色渐变背景 */
+        }
+
+        /* 定义带边框的容器样式 */
+        .container {
+            border: 2px solid #f5f1f1; /* 设置容器边框 */
+            width: 400px; /* 设置容器宽度 */
+            height: 400px; /* 根据内容大小调整高度 */
+            border-radius: 4px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            display: flex; /* 使用 Flexbox 布局 */
+            flex-direction: column; /* 垂直方向布局 */
+            align-items: center; /* 在水平方向上居中 */
+            justify-content: center; /* 在垂直方向上居中 */
+        }
+
+        /* 设置按钮样式 */
+        .container > .el-button {
+            margin-top: 40px; /* 设置按钮之间的间距 */
+            margin-bottom: 40px;
+        }
+
+    </style>
+</head>
+<body>
+    <h1 style="text-align:center; color:#409EFF; font-size:2.2rem; font-weight:bold; margin-top:32px; margin-bottom:24px; letter-spacing:2px;">Welcome</h1>
+    <div id="app" class="container" >
+        <el-button type="primary" @click.prevent="redirectTo('register.html')" >新用户注册</el-button>
+        <el-button type="primary" @click.prevent="redirectTo('userLogin.html')">用户登录</el-button>
+        <el-button type="primary" @click.prevent="redirectTo('managerLogin.html')">管理员登录</el-button>
+    </div>
+
+    <script src="../axios.min.js"></script>
+    <script src="../vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+
+    <script>
+        axios.defaults.withCredentials = true;
+        new Vue({
+            el:"#app",
+            methods:{
+                redirectTo(url){
+                    window.location.href = url;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

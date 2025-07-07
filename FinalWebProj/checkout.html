@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>结算页面</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            font-family: 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Arial', sans-serif;
+        }
+        .container {
+            max-width: 700px;
+            margin: 40px auto;
+            padding: 40px 32px 32px 32px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+            border: none;
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 36px;
+            color: #409EFF;
+            font-size: 2.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .product-img {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(64,158,255,0.08);
+        }
+        .el-form-item {
+            margin-bottom: 24px;
+        }
+        .el-form-item__label {
+            font-size: 1.08rem;
+            color: #333;
+        }
+        .el-input, .el-input-number, .el-select {
+            width: 100%;
+        }
+        .order-summary {
+            text-align: right;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        @media (max-width: 600px) {
+            .container {
+                max-width: 98vw;
+                padding: 18px 4vw 18px 4vw;
+            }
+        }
+    </style>
+</head>
+<body>
+<div id="app" class="container">
+    <h2 class="title">订单结算</h2>
+    <el-table :data="cart" border stripe style="width: 100%">
+        <el-table-column label="图片" width="80">
+            <template slot-scope="scope">
+                <img :src="scope.row.imageUrl" class="product-img" v-if="scope.row.imageUrl">
+            </template>
+        </el-table-column>
+        <el-table-column prop="productName" label="商品名称" width="180"></el-table-column>
+        <el-table-column prop="price" label="单价" width="80"></el-table-column>
+        <el-table-column prop="buyCount" label="数量" width="80"></el-table-column>
+        <el-table-column label="小计" width="100">
+            <template slot-scope="scope">
+                ￥{{ (scope.row.price * scope.row.buyCount).toFixed(2) }}
+            </template>
+        </el-table-column>
+    </el-table>
+    <div class="order-summary">
+        总金额：￥{{ cartTotal }}
+    </div>
+    <el-form :model="orderForm" :rules="rules" ref="orderForm" label-width="100px" style="margin-top:30px;">
+        <el-form-item label="收货人" prop="receiver">
+            <el-input v-model="orderForm.receiver" placeholder="请输入收货人"></el-input>
+        </el-form-item>
+        <el-form-item label="收货地址" prop="address">
+            <el-input v-model="orderForm.address" placeholder="请输入收货地址"></el-input>
+        </el-form-item>
+        <el-form-item label="联系电话" prop="phone">
+            <el-input v-model="orderForm.phone" placeholder="请输入联系电话"></el-input>
+        </el-form-item>
+        <el-form-item>
+            <el-button type="primary" @click.prevent="submitOrder" :loading="submitting">提交订单</el-button>
+            <el-button @click="goBack">返回</el-button>
+        </el-form-item>
+    </el-form>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="../axios.min.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<script>
+new Vue({
+    el: '#app',
+    data() {
+        return {
+            cart: [],
+            orderForm: {
+                receiver: '',
+                address: '',
+                phone: ''
+            },
+            submitting: false,
+            rules: {
+                receiver: [
+                    { required: true, message: '请输入收货人', trigger: 'blur' }
+                ],
+                address: [
+                    { required: true, message: '请输入收货地址', trigger: 'blur' }
+                ],
+                phone: [
+                    { required: true, message: '请输入联系电话', trigger: 'blur' },
+                    { pattern: /^1[3-9]\d{9}$/, message: '请输入有效的手机号', trigger: 'blur' }
+                ]
+            }
+        }
+    },
+    computed: {
+        cartTotal() {
+            return this.cart.reduce((sum, item) => sum + item.price * item.buyCount, 0).toFixed(2);
+        }
+    },
+    created() {
+        this.loadCart();
+        // 调试：打印当前userId
+        console.log('当前userId:', this.getUserId());
+    },
+    methods: {
+        getUserId() {
+            let uid = localStorage.getItem('userId');
+            if (!uid) uid = sessionStorage.getItem('userId');
+            if (uid === undefined || uid === null || uid === '') return null;
+            return Number(uid); // 强制转成数字
+        },
+        loadCart() {
+            const cart = localStorage.getItem('cart');
+            this.cart = cart ? JSON.parse(cart) : [];
+        },
+        submitOrder() {
+            this.$refs.orderForm.validate(valid => {
+                if (!valid) return;
+                const userId = this.getUserId();
+                if (!userId) {
+                    this.$message.error('请先登录');
+                    return;
+                }
+                if (this.cart.length === 0) {
+                    this.$message.error('购物车为空');
+                    return;
+                }
+                
+                // 调试信息
+                console.log('当前用户ID:', userId);
+                console.log('用户ID类型:', typeof userId);
+                
+                this.submitting = true;
+                // 修正items结构，包含currentPrice和productName
+                const items = this.cart.map(item => ({
+                    productId: item.productId,
+                    productName: item.productName,
+                    currentPrice: item.price, // 保证currentPrice有值
+                    quantity: item.buyCount
+                }));
+                
+                const orderData = {
+                    customerId: userId, // 现在是数字
+                    username: localStorage.getItem('username') || '', // 获取用户名
+                    shippingAddress: this.orderForm.address,
+                    receiverName: this.orderForm.receiver,
+                    receiverPhone: this.orderForm.phone,
+                    items: items
+                };
+                
+                // 调试输出完整订单数据
+                console.log('提交订单数据:', orderData);
+                
+                axios.post('http://localhost:9000/order/add', orderData).then(res => {
+                    // 兼容后端返回的 isOk/success/code 字段
+                    console.log('下单返回:', res.data);
+                    if (res.data.success || res.data.isOk || res.data.ok || res.data.code === 200) {
+                        this.$message.success('下单成功');
+                        localStorage.removeItem('cart');
+                        setTimeout(() => {
+                            window.location.href = 'userOrder.html';
+                        }, 1000);
+                    } else {
+                        this.$message.error(res.data.message || res.data.msg || '下单失败');
+                    }
+                }).catch((error) => {
+                    console.error('下单错误:', error);
+                    this.$message.error('下单失败: ' + (error.response?.data?.message || error.message || '未知错误'));
+                }).finally(() => {
+                    this.submitting = false;
+                });
+            });
+        },
+        goBack() {
+            window.location.href = 'userOrder.html';
+        }
+    }
+});
+</script>
+</body>
+</html>

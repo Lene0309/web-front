@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Manager Login Page</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+
+    <style type="text/css">
+        .el-icon-s-custom {
+            font-size: 60px; /* 设置字体图标的大小 */
+            height: 100px;
+    
+        }
+
+        body {
+            display: grid;
+            place-items: center; /* 将子元素居中放置 */
+            height: 100vh; /* 让 body 元素占据整个视口高度 */
+            margin: 0; /* 去除 body 默认的边距 */
+            background-image: url("背景5.jpg"); /* 替换 'your-background-image.jpg' 为你的背景图路径 */
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* 这个属性使得背景图固定，不随页面滚动而滚动 */
+            background-repeat: no-repeat;
+        }
+
+        /* 定义带边框的容器样式 */
+        .container {
+            border: 2px solid #f5f1f1; /* 设置容器边框 */
+            padding: 20px; /* 添加内边距以确保内容不贴紧边框 */
+            width: 400px; /* 设置容器宽度 */
+            height: 400px; /* 根据内容大小调整高度 */
+            border-radius: 4px;
+            box-shadow: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
+            display: flex; /* 使用 Flexbox 布局 */
+            flex-direction: column; /* 垂直方向布局 */
+            align-items: center; /* 在水平方向上居中 */
+            justify-content: center; /* 在垂直方向上居中 */
+        }
+
+    </style>
+</head>
+<body>
+    <div id="app" class="container" style="display: flex; justify-content: center;">
+        <h1 style="color: rgb(89, 101, 239); font-family: Arial, sans-serif; font-size: 24px;margin-top: -50px;">管理员登录</h1>
+        <i class="el-icon-s-custom"></i>
+        <!-- <form> -->
+            <!--v-model实现双向绑定-->
+            <!-- <p>管理员账号：<input type="text" v-model="managerForm.managerName"></p>
+            <p>管理员密码：<input type="password" v-model="managerForm.loginPwd"></p>
+            <p><button @click.prevent="login()">登录</button></p>
+        </form> -->
+        <!--注意button在form中默认成submit按钮，点击事件会触发表单的同步提交，相当于刷新了一次,所以click事件要阻止其默认行为-->
+        <!--@click-->
+        <el-form :model="managerForm" ref="managerForm" label-width="100px">
+            <el-form-item label="管理员账号" prop="managerName" style="margin-left: -60px;">
+                <el-input type="text" v-model="managerForm.managerName"></el-input>
+            </el-form-item>
+            <el-form-item label="管理员密码" prop="loginPwd" style="margin-left: -60px;">
+                <el-input type="password" v-model="managerForm.loginPwd" autocomplete="off"></el-input>
+            </el-form-item>
+            <el-form-item style="margin-bottom: -30px;">
+                <el-button type="primary" @click.prevent="mlogin()">用户登录</el-button>
+            </el-form-item>
+            <el-link icon="el-icon-menu" href="mainMenu.html" style="margin-bottom: -90px;margin-left: 200px;">返回主菜单</el-link>
+        </el-form>
+    </div>
+
+    <script src="../axios.min.js"></script>
+    <script src="../vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script>
+        axios.defaults.withCredentials = true;
+        new Vue({
+            el:'#app',
+            data:{
+                managerForm:{
+                    managerName:'nikki',
+                    loginPwd:'1212'
+                }
+            },
+            methods:{
+                mlogin(){
+                    //创建formdata对象并添加提交数据
+                    let fd = new FormData();
+                    fd.append('managerName',this.managerForm.managerName)
+                    fd.append('loginPwd',this.managerForm.loginPwd)
+                    //formdata数据必须使用post提交方式
+                    axios.post('http://localhost:9000/manager/login',fd).then(res=>{
+                        if(res.data.isOk){
+                            alert(res.data.msg);
+                            location.href = 'managerMenu.html';
+                        }else{
+                            alert(res.data.msg);
+                        }
+                    })
+                }
+            }
+        })
+    </script>
+</body>
+</html>

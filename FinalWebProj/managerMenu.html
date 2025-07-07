@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>库存管理系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui@2.15.14/lib/theme-chalk/index.css">
+    <style>
+        body { margin:0; }
+    </style>
+</head>
+<body style="margin:0;">
+    <div id="app-layout" style="display: flex; height: 100vh;">
+        <!-- 侧边导航栏 -->
+        <div style="width:220px; min-height:100vh; background:#2d3a4b; display:flex; flex-direction:column;">
+            <div style="height:64px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:bold;">
+                管理后台
+            </div>
+            <el-menu
+                :default-active="activeMenu"
+                background-color="#2d3a4b"
+                text-color="#fff"
+                active-text-color="#ffd04b"
+                style="border-right:none; flex:1;"
+                @select="handleMenuSelect">
+                <el-menu-item index="productList.html"><i class="el-icon-goods"></i><span slot="title">商品管理</span></el-menu-item>
+                <el-menu-item index="orderList.html"><i class="el-icon-document"></i><span slot="title">订单管理</span></el-menu-item>
+                <el-menu-item index="CustomerList.html"><i class="el-icon-user"></i><span slot="title">客户管理</span></el-menu-item>
+                <el-menu-item index="deliveryList.html"><i class="el-icon-truck"></i><span slot="title">配送管理</span></el-menu-item>
+                <el-menu-item index="stockManagement.html"><i class="el-icon-box"></i><span slot="title">库存管理</span></el-menu-item>
+                <el-menu-item index="statistics.html"><i class="el-icon-s-data"></i><span slot="title">销售统计</span></el-menu-item>
+            </el-menu>
+        </div>
+        <!-- 主内容区 -->
+        <div style="flex:1; display:flex; flex-direction:column; background:#f5f7fa;">
+            <!-- 顶部栏 -->
+            <div style="height: 64px; display: flex; align-items: center; justify-content: flex-end; padding: 0 32px; border-bottom: 1px solid #eee; background:#fff;">
+                <el-dropdown @command="handleCommand">
+                    <span class="el-dropdown-link" style="cursor: pointer;">
+                        <el-avatar icon="el-icon-user-solid"></el-avatar>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+            </div>
+            <!-- 内容区 -->
+            <div style="flex:1; padding:32px; overflow:auto;">
+                <div id="app" class="app-container">
+                    <el-breadcrumb separator="/">
+                        <el-breadcrumb-item :to="{ path: 'managerMenu.html' }">首页</el-breadcrumb-item>
+                        <el-breadcrumb-item>库存管理</el-breadcrumb-item>
+                    </el-breadcrumb>
+                    <div class="search-container">
+                        <el-form :inline="true" :model="searchForm">
+                            <el-form-item label="商品名称">
+                                <el-input v-model="searchForm.productName" placeholder="商品名称" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="商品分类">
+                                <el-select v-model="searchForm.categoryId" placeholder="全部" clearable>
+                                    <el-option v-for="item in categories" :key="item.categoryId" :label="item.categoryName" :value="item.categoryId"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="商品状态">
+                                <el-select v-model="searchForm.status" placeholder="全部" clearable>
+                                    <el-option label="上架" :value="1"></el-option>
+                                    <el-option label="下架" :value="0"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="handleSearch">查询</el-button>
+                                <el-button @click="resetSearch">重置</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        <el-button type="primary" @click="handleAdd">添加商品</el-button>
+                        <el-button type="danger" @click="handleBatchDelete" :disabled="multipleSelection.length===0">批量删除</el-button>
+                    </div>
+                    <el-table
+                        :data="productList"
+                        border
+                        style="width: 100%"
+                        @selection-change="handleSelectionChange">
+                        <el-table-column type="selection" width="55"></el-table-column>
+                        <el-table-column prop="productId" label="商品ID" width="80"></el-table-column>
+                        <el-table-column prop="productName" label="商品名称" width="180"></el-table-column>
+                        <el-table-column label="商品图片" width="120">
+                            <template slot-scope="scope">
+                                <img :src="getImageUrl(scope.row.imageUrl)" style="width: 60px; height: 60px;" @error="handleImageError">
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="categoryName" label="分类" width="120"></el-table-column>
+                        <el-table-column prop="price" label="价格" width="120">
+                            <template slot-scope="scope">¥{{formatPrice(scope.row.price)}}</template>
+                        </el-table-column>
+                        <el-table-column prop="stock" label="库存" width="150">
+                            <template slot-scope="scope">
+                                <div style="display: flex; align-items: center;">
+                                    <el-input-number v-model="scope.row.stock" :min="0" :controls="false" class="stock-input" @change="handleStockChange(scope.row)"></el-input-number>
+                                    <span :class="getStockClass(scope.row.stock)" style="margin-left: 8px;">
+                                        {{getStockText(scope.row.stock)}}
+                                    </span>
+                                </div>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="status" label="状态" width="100">
+                            <template slot-scope="scope">
+                                <span>
+                                    <span :class="['status-badge', scope.row.status === 1 ? 'status-active' : 'status-inactive']"></span>
+                                    {{scope.row.status === 1 ? '上架' : '下架'}}
+                                </span>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="220">
+                            <template slot-scope="scope">
+                                <el-button size="mini" @click="handleEdit(scope.row)">编辑</el-button>
+                                <el-button size="mini" type="danger" @click="handleDelete(scope.row)">删除</el-button>
+                                <el-button size="mini" :type="scope.row.status === 1 ? 'warning' : 'success'" @click="handleStatusChange(scope.row)">
+                                    {{scope.row.status === 1 ? '下架' : '上架'}}
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="pagination-container">
+                        <el-pagination
+                            @size-change="handleSizeChange"
+                            @current-change="handleCurrentChange"
+                            :current-page="currentPage"
+                            :page-sizes="[10, 20, 30, 50]"
+                            :page-size="pageSize"
+                            layout="total, sizes, prev, pager, next, jumper"
+                            :total="total">
+                        </el-pagination>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.min.js"></script>
+    <script src="https://unpkg.com/element-ui@2.15.14/lib/index.js"></script>
+    <script src="../axios.min.js"></script>
+    <script>
+        Vue.use(ELEMENT);
+        axios.defaults.baseURL = 'http://localhost:9000';
+        axios.defaults.withCredentials = true;
+        new Vue({
+            el: "#app-layout",
+            data() {
+                return {
+                    activeMenu: 'stockManagement.html',
+                    productList: [],
+                    categories: [],
+                    multipleSelection: [],
+                    searchForm: { productName: '', categoryId: '', status: '' },
+                    currentPage: 1,
+                    pageSize: 10,
+                    total: 0,
+                    defaultImage: 'data:image/svg+xml;charset=UTF-8,%3Csvg xmlns="http://www.w3.org/2000/svg" width="60" height="60" viewBox="0 0 60 60"%3E%3Crect fill="%23f5f5f5" width="60" height="60"/%3E%3Ctext fill="%23666666" font-family="Arial" font-size="12" dy=".5em" text-anchor="middle" x="30" y="30"%3E暂无图片%3C/text%3E%3C/svg%3E'
+                }
+            },
+            created() {
+                this.getProductList();
+                this.getCategories();
+            },
+            methods: {
+                handleMenuSelect(index) {
+                    window.location.href = index;
+                },
+                handleCommand(command) {
+                    if (command === 'logout') {
+                        axios.get("/logout").finally(() => {
+                            localStorage.removeItem('userId');
+                            localStorage.removeItem('username');
+                            window.location.href = 'managerLogin.html';
+                        });
+                    }
+                },
+                getProductList() {
+                    const params = {
+                        pageNum: this.currentPage,
+                        pageSize: this.pageSize,
+                        productName: this.searchForm.productName,
+                        categoryId: this.searchForm.categoryId,
+                        status: this.searchForm.status
+                    };
+                    axios.get('http://localhost:9000/stock/list', { params })
+                        .then(res => {
+                            this.productList = res.data.data.list || [];
+                            this.total = res.data.data.total || 0;
+                        });
+                },
+                getCategories() {
+                    axios.get('/stock/category/list')
+                        .then(res => {
+                            this.categories = res.data.data || [];
+                        });
+                },
+                handleAdd() {
+                    window.location.href = 'productAdd.html';
+                },
+                handleEdit(row) {
+                    window.location.href = `productEdit.html?id=${row.productId}`;
+                },
+                handleDelete(row) {
+                    this.$confirm('确认删除该商品吗?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        return axios.post(`/product/delete/${row.productId}`);
+                    }).then(() => {
+                        this.$message.success('删除成功');
+                        this.getProductList();
+                    }).catch(() => {});
+                },
+                handleBatchDelete() {
+                    if (this.multipleSelection.length === 0) {
+                        this.$message.warning('请选择要删除的商品');
+                        return;
+                    }
+                    const ids = this.multipleSelection.map(item => item.productId);
+                    this.$confirm(`确认删除选中的${ids.length}件商品吗?`, '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        return axios.post("/product/batchDelete", { ids });
+                    }).then(() => {
+                        this.$message.success('批量删除成功');
+                        this.getProductList();
+                        this.multipleSelection = [];
+                    }).catch(() => {});
+                },
+                handleStockChange(row) {
+                    axios.post('/product/updateStock', { productId: row.productId, stock: row.stock })
+                        .then(() => {
+                            this.$message.success('库存更新成功');
+                        })
+                        .catch(() => {
+                            this.$message.error('库存更新失败');
+                            this.getProductList();
+                        });
+                },
+                handleStatusChange(row) {
+                    const newStatus = row.status === 1 ? 0 : 1;
+                    axios.post(`/product/updateStatus/${row.productId}`, { status: newStatus })
+                        .then(() => {
+                            this.$message.success('状态更新成功');
+                            this.getProductList();
+                        })
+                        .catch(() => {
+                            this.$message.error('状态更新失败');
+                        });
+                },
+                getImageUrl(url) {
+                    if (!url) return this.defaultImage;
+                    if (url.startsWith('http') || url.startsWith('data:')) return url;
+                    return `/FinalWebProj/image/${url.replace(/^.*[\\/]/, '')}`;
+                },
+                handleImageError(e) {
+                    e.target.src = this.defaultImage;
+                    e.target.onerror = null; // 防止死循环
+                },
+                formatPrice(price) {
+                    if (typeof price !== 'number') return '0.00';
+                    return price.toFixed(2);
+                },
+                getStockText(stock) {
+                    if (stock < 10) return '低库存';
+                    if (stock < 50) return '正常';
+                    return '充足';
+                },
+                getStockClass(stock) {
+                    if (stock < 10) return 'stock-low';
+                    if (stock < 50) return 'stock-normal';
+                    return 'stock-high';
+                },
+                handleSelectionChange(val) {
+                    this.multipleSelection = val;
+                },
+                handleSizeChange(val) {
+                    this.pageSize = val;
+                    this.getProductList();
+                },
+                handleCurrentChange(val) {
+                    this.currentPage = val;
+                    this.getProductList();
+                },
+                handleSearch() {
+                    this.currentPage = 1;
+                    this.getProductList();
+                },
+                resetSearch() {
+                    this.searchForm = { productName: '', categoryId: '', status: '' };
+                    this.handleSearch();
+                }
+            }
+        });
+    </script>
+</body>
+</html>

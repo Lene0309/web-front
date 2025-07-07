@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单详情</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+        }
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 32px;
+            background: #fff;
+            border-radius: 16px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.12);
+        }
+        .title {
+            text-align: center;
+            margin-bottom: 36px;
+            color: #409EFF;
+            font-size: 2.2rem;
+            font-weight: bold;
+            letter-spacing: 2px;
+        }
+        .order-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 24px;
+            padding-bottom: 16px;
+            border-bottom: 1px solid #ebeef5;
+        }
+        .order-id {
+            font-size: 18px;
+            font-weight: 600;
+            color: #303133;
+        }
+        .order-status {
+            font-size: 16px;
+        }
+        .order-body {
+            display: flex;
+            margin-bottom: 24px;
+        }
+        .order-info {
+            flex: 1;
+            padding-right: 20px;
+        }
+        .order-address {
+            flex: 1;
+            border-left: 1px solid #ebeef5;
+            padding-left: 20px;
+        }
+        .section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #303133;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+        }
+        .section-title i {
+            margin-right: 8px;
+        }
+        .info-item {
+            margin-bottom: 12px;
+            display: flex;
+        }
+        .info-label {
+            width: 100px;
+            color: #909399;
+        }
+        .info-value {
+            flex: 1;
+            color: #606266;
+        }
+        .product-table {
+            width: 100%;
+            margin-bottom: 24px;
+            border-collapse: collapse;
+        }
+        .product-table th {
+            background: #f5f7fa;
+            padding: 12px;
+            text-align: left;
+            color: #909399;
+            font-weight: 500;
+        }
+        .product-table td {
+            padding: 12px;
+            border-bottom: 1px solid #ebeef5;
+            color: #606266;
+        }
+        .product-image {
+            width: 60px;
+            height: 60px;
+            object-fit: cover;
+            border-radius: 4px;
+        }
+        .product-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .product-sku {
+            font-size: 12px;
+            color: #909399;
+        }
+        .total-section {
+            text-align: right;
+            margin-top: 16px;
+        }
+        .total-amount {
+            font-size: 18px;
+            font-weight: 600;
+            color: #f56c6c;
+        }
+        .action-buttons {
+            margin-top: 32px;
+            text-align: center;
+        }
+        .el-tag {
+            border-radius: 8px !important;
+            font-size: 14px;
+            padding: 4px 14px;
+        }
+        @media (max-width: 768px) {
+            .container {
+                padding: 16px;
+            }
+            .order-body {
+                flex-direction: column;
+            }
+            .order-info {
+                padding-right: 0;
+                margin-bottom: 20px;
+            }
+            .order-address {
+                border-left: none;
+                padding-left: 0;
+                border-top: 1px solid #ebeef5;
+                padding-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <h2 class="title">订单详情</h2>
+        
+        <div class="order-header">
+            <div class="order-id">订单编号: {{order.orderId}}</div>
+            <div class="order-status">
+                <el-tag :type="getStatusTagType(order.status)" size="medium">
+                    {{getStatusText(order.status)}}
+                </el-tag>
+            </div>
+        </div>
+        
+        <div class="order-body">
+            <div class="order-info">
+                <div class="section-title">
+                    <i class="el-icon-user"></i>客户信息
+                </div>
+                <div class="info-item">
+                    <div class="info-label">客户名称:</div>
+                    <div class="info-value">{{order.username}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">客户ID:</div>
+                    <div class="info-value">{{order.customerId}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">下单时间:</div>
+                    <div class="info-value">{{formatDate(order.createTime)}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">支付时间:</div>
+                    <div class="info-value">{{order.paymentTime ? formatDate(order.paymentTime) : '未支付'}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">发货时间:</div>
+                    <div class="info-value">{{order.shippingTime ? formatDate(order.shippingTime) : '未发货'}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">完成时间:</div>
+                    <div class="info-value">{{order.completeTime ? formatDate(order.completeTime) : '未完成'}}</div>
+                </div>
+            </div>
+            
+            <div class="order-address">
+                <div class="section-title">
+                    <i class="el-icon-location-outline"></i>收货信息
+                </div>
+                <div class="info-item">
+                    <div class="info-label">收货人:</div>
+                    <div class="info-value">{{order.receiverName}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">联系电话:</div>
+                    <div class="info-value">{{order.receiverPhone}}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">收货地址:</div>
+                    <div class="info-value">{{order.shippingAddress}}</div>
+                </div>
+                
+                <template v-if="order.deliveryInfo">
+                    <div class="section-title" style="margin-top: 24px;">
+                        <i class="el-icon-truck"></i>物流信息
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">物流公司:</div>
+                        <div class="info-value">{{order.deliveryInfo.deliveryCompany}}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">物流单号:</div>
+                        <div class="info-value">{{order.deliveryInfo.deliveryNumber}}</div>
+                    </div>
+                    <div class="info-item">
+                        <div class="info-label">物流状态:</div>
+                        <div class="info-value">
+                            <el-tag :type="order.deliveryInfo.deliveryStatus === 2 ? 'success' : 'primary'">
+                                {{order.deliveryInfo.deliveryStatus === 2 ? '已签收' : '运输中'}}
+                            </el-tag>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+        
+        <div class="section-title">
+            <i class="el-icon-shopping-cart-2"></i>商品清单
+        </div>
+        <table class="product-table">
+            <thead>
+                <tr>
+                    <th width="80px">商品图片</th>
+                    <th>商品名称</th>
+                    <th width="120px">单价</th>
+                    <th width="80px">数量</th>
+                    <th width="120px">小计</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr v-for="item in order.items" :key="item.itemId || item.id">
+                    <td>
+                        <img :src="item.productImage || item.imageUrl || item.image_url" class="product-image" v-if="item.productImage || item.imageUrl || item.image_url">
+                        <span v-else>无图片</span>
+                    </td>
+                    <td>
+                        <div class="product-name">{{item.productName}}</div>
+                        <div class="product-sku">SKU: {{item.skuCode || item.productId || '无'}}</div>
+                    </td>
+                    <td>¥{{(item.currentPrice || item.price || 0).toFixed(2)}}</td>
+                    <td>{{item.quantity}}</td>
+                    <td>¥{{((item.currentPrice || item.price || 0) * item.quantity).toFixed(2)}}</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <div class="total-section">
+            <div>商品总金额: ¥{{order.totalAmount.toFixed(2)}}</div>
+            <div>运费: ¥0.00</div>
+            <div class="total-amount">实付金额: ¥{{order.totalAmount.toFixed(2)}}</div>
+        </div>
+        
+        <div class="action-buttons">
+            <el-button @click="goBack">返回</el-button>
+            <el-button type="primary" @click="printOrder">打印订单</el-button>
+           
+            <el-button type="danger" @click="cancelOrder" 
+                      v-if="order.status === 0 || order.status === 1">取消订单</el-button>
+          
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="../axios.min.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.1/moment.min.js"></script>
+    
+    <script>
+        function getUrlParam(name) {
+            const reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)");
+            const r = window.location.search.substr(1).match(reg);
+            if (r != null) return decodeURIComponent(r[2]);
+            return null;
+        }
+
+        new Vue({
+            el: '#app',
+            data() {
+                return {
+                    order: {
+                        orderId: '',
+                        username: '',
+                        customerId: null,
+                        totalAmount: 0,
+                        status: 0,
+                        createTime: '',
+                        paymentTime: null,
+                        shippingTime: null,
+                        completeTime: null,
+                        receiverName: '',
+                        receiverPhone: '',
+                        shippingAddress: '',
+                        items: [],
+                        deliveryInfo: null
+                    }
+                }
+            },
+           created() {
+    const orderId = getUrlParam('id');
+    if (!orderId) {
+        console.error('URL中缺少订单ID参数');
+        this.$message.error('缺少订单ID参数');
+        setTimeout(() => {
+            this.goBack();
+        }, 1500); // 延迟1.5秒跳转，让用户看到错误信息
+        return;
+    }
+    
+    this.loadOrderDetail(orderId);
+},
+            methods: {
+               loadOrderDetail(orderId) {
+    console.log('开始加载订单详情，订单ID:', orderId);
+    this.loading = true;
+    
+    axios.get(`http://localhost:9000/order/detail/${orderId}`)
+        .then(response => {
+            console.log('完整API响应:', response);
+            console.log('API响应数据:', response.data);
+            
+            let orderData = null;
+            
+            // 支持多种响应格式
+            if (response.data && response.data.ok === true) {
+                // 格式1: {ok: true, data: {data: {...}}}
+                if (response.data.data && response.data.data.data) {
+                    orderData = response.data.data.data;
+                }
+                // 格式2: {ok: true, data: {...}}
+                else if (response.data.data) {
+                    orderData = response.data.data;
+                }
+                // 格式3: {ok: true, ...}
+                else {
+                    orderData = response.data;
+                }
+            } else if (response.data && response.data.code === 200) {
+                // 格式4: {code: 200, data: {...}}
+                orderData = response.data.data || response.data;
+            } else if (response.data) {
+                // 格式5: 直接返回数据
+                orderData = response.data;
+            }
+            
+            if (orderData) {
+                // 确保数据完整性
+                this.order = {
+                    orderId: orderData.orderId || orderData.order_id || '无',
+                    username: orderData.username || '无',
+                    customerId: orderData.customerId || orderData.customer_id || 0,
+                    totalAmount: orderData.totalAmount || orderData.total_amount || 0,
+                    status: orderData.status || 0,
+                    createTime: orderData.createTime || orderData.create_time || '',
+                    paymentTime: orderData.paymentTime || orderData.payment_time || null,
+                    shippingTime: orderData.shippingTime || orderData.shipping_time || null,
+                    completeTime: orderData.completeTime || orderData.complete_time || null,
+                    receiverName: orderData.receiverName || orderData.receiver_name || '无',
+                    receiverPhone: orderData.receiverPhone || orderData.receiver_phone || '无',
+                    shippingAddress: orderData.shippingAddress || orderData.shipping_address || '无',
+                    items: Array.isArray(orderData.items) ? orderData.items : [],
+                    deliveryInfo: orderData.deliveryInfo || orderData.delivery || null
+                };
+                
+                console.log('格式化后的订单数据:', this.order);
+                console.log('商品信息:', this.order.items);
+                
+                // 如果没有商品信息，尝试从其他字段获取
+                if (!this.order.items || this.order.items.length === 0) {
+                    console.warn('订单中没有商品信息，尝试从其他字段获取');
+                    if (orderData.orderItems) {
+                        this.order.items = orderData.orderItems;
+                    } else if (orderData.itemList) {
+                        this.order.items = orderData.itemList;
+                    }
+                }
+            } else {
+                const errorMsg = response.data ? (response.data.msg || response.data.message) : '订单数据为空';
+                console.error('订单详情错误:', errorMsg);
+                this.$message.error(errorMsg);
+            }
+        })
+        .catch(error => {
+            console.error('请求错误:', error);
+            if (error.response) {
+                console.error('状态码:', error.response.status);
+                console.error('响应数据:', error.response.data);
+                this.$message.error(`请求失败: ${error.response.status} - ${error.response.data.msg || '未知错误'}`);
+            } else {
+                this.$message.error('网络错误: ' + error.message);
+            }
+        })
+        .finally(() => {
+            this.loading = false;
+        });
+},
+                goBack() {
+                    window.location.href = 'orderList.html';
+                },
+                printOrder() {
+                    window.print();
+                },
+                cancelOrder() {
+                    this.$confirm('确认取消该订单吗?', '提示', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        type: 'warning'
+                    }).then(() => {
+                        axios.post(`http://localhost:9000/order/cancel/${this.order.orderId}`)
+                            .then(res => {
+                                if (res.data.code === 200) {
+                                    this.$message.success('订单取消成功');
+                                    this.loadOrderDetail(this.order.orderId);
+                                } else {
+                                    this.$message.error(res.data.message);
+                                }
+                            })
+                            .catch(error => {
+                                this.$message.error('取消订单失败');
+                                console.error(error);
+                            });
+                    }).catch(() => {
+                        this.$message.info('已取消操作');
+                    });
+                },
+                shipOrder() {
+                    this.$prompt('请输入物流单号', '订单发货', {
+                        confirmButtonText: '确定',
+                        cancelButtonText: '取消',
+                        inputPlaceholder: '请输入物流单号',
+                        inputValidator: (value) => {
+                            if (!value) {
+                                return '物流单号不能为空';
+                            }
+                        }
+                    }).then(({ value }) => {
+                        // 创建 URLSearchParams 对象来发送表单参数
+                        const params = new URLSearchParams();
+                        params.append('orderId', this.order.orderId);
+                        params.append('deliveryCompany', '默认物流公司');
+                        params.append('deliveryNumber', value);
+                        
+                        axios.post("http://localhost:9000/order/ship", params, {
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }
+                        }).then(res => {
+                            if (res.data.code === 200) {
+                                this.$message.success('发货成功');
+                                this.loadOrderDetail(this.order.orderId);
+                            } else {
+                                this.$message.error(res.data.message);
+                            }
+                        }).catch(error => {
+                            this.$message.error('发货失败');
+                            console.error(error);
+                        });
+                    }).catch(() => {
+                        this.$message.info('已取消操作');
+                    });
+                },
+                getStatusText(status) {
+                    const statusMap = {
+                        0: '待付款',
+                        1: '待发货',
+                        2: '已发货',
+                        3: '已完成',
+                        4: '已取消'
+                    };
+                    return statusMap[status] || '未知状态';
+                },
+                getStatusTagType(status) {
+                    const typeMap = {
+                        0: 'warning',
+                        1: 'primary',
+                        2: 'info',
+                        3: 'success',
+                        4: 'danger'
+                    };
+                    return typeMap[status] || '';
+                },
+                formatDate(dateStr) {
+                    return moment(dateStr).format('YYYY-MM-DD HH:mm:ss');
+                },
+                debugData() {
+                    const debugInfo = `
+订单基本信息:
+- 订单ID: ${this.order.orderId}
+- 客户名: ${this.order.username}
+- 总金额: ${this.order.totalAmount}
+- 状态: ${this.order.status}
+
+商品信息:
+- 商品数量: ${this.order.items ? this.order.items.length : 0}
+- 商品列表: ${JSON.stringify(this.order.items, null, 2)}
+
+完整订单数据:
+${JSON.stringify(this.order, null, 2)}
+                    `;
+                    
+                    this.$alert(debugInfo, '调试信息', {
+                        confirmButtonText: '确定',
+                        dangerouslyUseHTMLString: false
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>

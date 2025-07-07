@@ -1,0 +1,724 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>订单管理系统</title>
+    <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+    <style>
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            margin: 0;
+            font-family: 'Helvetica Neue', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', Arial, sans-serif;
+        }
+        .app-container {
+            max-width: 1400px;
+            margin: 40px auto 0 auto;
+            background: #fff;
+            border-radius: 18px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            padding: 32px 36px 36px 36px;
+        }
+        .el-breadcrumb {
+            margin-bottom: 24px;
+            font-size: 16px;
+        }
+        .search-container {
+            margin-bottom: 28px;
+            background: #f8fafc;
+            padding: 18px 24px 8px 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+        }
+        .el-form-item {
+            margin-right: 24px;
+        }
+        .el-button {
+            border-radius: 8px !important;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .el-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .el-table {
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+        }
+        .el-table th, .el-table td {
+            font-size: 15px;
+            padding: 12px 0;
+        }
+        .el-table__row:hover {
+            background: #f8fafc !important;
+        }
+        .status-tag {
+            border-radius: 8px !important;
+            font-size: 14px;
+            padding: 4px 14px;
+        }
+        .pagination-container {
+            margin-top: 32px;
+            text-align: center;
+        }
+        .el-pagination {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            padding: 10px 0;
+        }
+        .order-id-cell {
+            font-weight: 600;
+            color: #409EFF;
+            cursor: pointer;
+        }
+        .order-id-cell:hover {
+            text-decoration: underline;
+        }
+        .total-amount {
+            font-weight: 600;
+            color: #F56C6C;
+        }
+        .customer-info {
+            display: flex;
+            flex-direction: column;
+        }
+        .customer-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+        }
+        .customer-id {
+            font-size: 12px;
+            color: #909399;
+        }
+        .time-cell {
+            font-size: 13px;
+            color: #606266;
+        }
+        .action-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .el-button--mini {
+            padding: 5px 10px;
+            font-size: 12px;
+        }
+        @media (max-width: 900px) {
+            .app-container {
+                padding: 12px 4px;
+            }
+            .el-table th, .el-table td {
+                font-size: 13px;
+                padding: 8px 0;
+            }
+            .action-buttons {
+                flex-direction: column;
+                gap: 4px;
+            }
+        }
+    </style>
+</head>
+<body style="margin:0;">
+    <div id="app-layout" style="display: flex; height: 100vh;">
+        <!-- 侧边导航栏 -->
+        <div style="width:220px; min-height:100vh; background:#2d3a4b; display:flex; flex-direction:column; box-shadow:2px 0 8px rgba(0,0,0,0.08);">
+            <div style="height:64px; display:flex; align-items:center; justify-content:center; color:#fff; font-size:20px; font-weight:bold; letter-spacing:2px;">
+                管理后台
+            </div>
+            <el-menu
+                :default-active="activeMenu"
+                class="el-menu-vertical-demo"
+                background-color="#2d3a4b"
+                text-color="#fff"
+                active-text-color="#ffd04b"
+                style="border-right:none; flex:1;"
+                @select="handleMenuSelect">
+                <el-menu-item index="productList.html">
+                    <i class="el-icon-goods"></i>
+                    <span slot="title">商品管理</span>
+                </el-menu-item>
+                <el-menu-item index="orderList.html">
+                    <i class="el-icon-document"></i>
+                    <span slot="title">订单管理</span>
+                </el-menu-item>
+                <el-menu-item index="CustomerList.html">
+                    <i class="el-icon-user"></i>
+                    <span slot="title">客户管理</span>
+                </el-menu-item>
+                <el-menu-item index="deliveryList.html">
+                    <i class="el-icon-truck"></i>
+                    <span slot="title">配送管理</span>
+                </el-menu-item>
+                <el-menu-item index="stockManagement.html">
+                    <i class="el-icon-box"></i>
+                    <span slot="title">库存管理</span>
+                </el-menu-item>
+                <el-menu-item index="statistics.html">
+                    <i class="el-icon-s-data"></i>
+                    <span slot="title">销售统计</span>
+                </el-menu-item>
+            </el-menu>
+        </div>
+        <!-- 主内容区 -->
+        <div style="flex:1; display:flex; flex-direction:column; background:#f5f7fa; min-width:0;">
+            <!-- 顶部栏 -->
+            <div style="height: 64px; display: flex; align-items: center; justify-content: flex-end; padding: 0 32px; border-bottom: 1px solid #eee; background:#fff;">
+                <el-dropdown @command="handleCommand">
+                    <span class="el-dropdown-link" style="cursor: pointer;">
+                        <el-avatar icon="el-icon-user-solid"></el-avatar>
+                    </span>
+                    <el-dropdown-menu slot="dropdown">
+                        <el-dropdown-item command="logout">退出登录</el-dropdown-item>
+                    </el-dropdown-menu>
+                </el-dropdown>
+            </div>
+            <!-- 内容区 -->
+            <div style="flex:1; padding:32px; overflow:auto; min-width:0;">
+                <div id="app" class="app-container">
+                    <el-breadcrumb separator="/">
+                        <el-breadcrumb-item :to="{ path: 'managerMenu.html' }">首页</el-breadcrumb-item>
+                        <el-breadcrumb-item>订单管理</el-breadcrumb-item>
+                    </el-breadcrumb>
+                    
+                    <div class="search-container">
+                        <el-form :inline="true" :model="searchForm" class="demo-form-inline">
+                            <el-form-item label="订单编号">
+                                <el-input v-model="searchForm.orderNo" placeholder="请输入订单编号" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="客户名称">
+                                <el-input v-model="searchForm.username" placeholder="请输入客户名称" clearable></el-input>
+                            </el-form-item>
+                            <el-form-item label="订单状态">
+                                <el-select v-model="searchForm.status" placeholder="全部状态" clearable>
+                                    <el-option label="待付款" :value="0"></el-option>
+                                    <el-option label="待发货" :value="1"></el-option>
+                                    <el-option label="已发货" :value="2"></el-option>
+                                    <el-option label="已完成" :value="3"></el-option>
+                                    <el-option label="已取消" :value="4"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item>
+                                <el-button type="primary" @click="handleSearch" icon="el-icon-search">查询</el-button>
+                                <el-button @click="resetSearch" icon="el-icon-refresh">重置</el-button>
+                            </el-form-item>
+                        </el-form>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <el-button type="primary" @click="showAddDialog = true" icon="el-icon-plus">新增订单</el-button>
+                    </div>
+                    
+                    <el-table
+                        :data="orderList"
+                        border
+                        style="width: 100%"
+                        v-loading="loading">
+                        <el-table-column
+                          prop="orderId"
+                          label="订单编号"
+                          width="180">
+                        </el-table-column>
+                        <el-table-column
+                          label="客户信息"
+                          width="180">
+                          <template slot-scope="scope">
+                            <div class="customer-info">
+                              <span class="customer-name">{{scope.row.username}}</span>
+                              <span class="customer-id">ID: {{scope.row.customerId}}</span>
+                            </div>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="totalAmount"
+                          label="订单金额"
+                          width="120">
+                          <template slot-scope="scope">
+                            <span class="total-amount">¥{{Number(scope.row.totalAmount).toFixed(2)}}</span>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          prop="status"
+                          label="订单状态"
+                          width="120">
+                          <template slot-scope="scope">
+                            <el-tag :type="getStatusTagType(scope.row.status)" class="status-tag">
+                              {{getStatusText(scope.row.status)}}
+                            </el-tag>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          label="下单时间"
+                          width="180">
+                          <template slot-scope="scope">
+                            <div class="time-cell">{{formatDate(scope.row.createTime)}}</div>
+                          </template>
+                        </el-table-column>
+                        <el-table-column
+                          label="操作"
+                          width="220">
+                          <template slot-scope="scope">
+                            <div class="action-buttons">
+                              <el-button size="mini" type="info" @click="viewOrderDetail(scope.row)" icon="el-icon-view">查看详情</el-button>
+                              <el-button size="mini" @click="openEditDialog(scope.row)" icon="el-icon-edit">编辑</el-button>
+                              <el-button size="mini" type="danger" @click="deleteOrder(scope.row.orderId)" icon="el-icon-delete">删除</el-button>
+                            </div>
+                          </template>
+                        </el-table-column>
+                    </el-table>
+                    
+                    <div class="pagination-container">
+                        <el-pagination
+                          @size-change="handleSizeChange"
+                          @current-change="handleCurrentChange"
+                          :current-page="currentPage"
+                          :page-sizes="[10, 20, 30, 50]"
+                          :page-size="pageSize"
+                          layout="total, sizes, prev, pager, next, jumper"
+                          :total="total">
+                        </el-pagination>
+                    </div>
+
+                    <!-- 新增订单对话框 -->
+                    <el-dialog title="新增订单" :visible.sync="showAddDialog">
+                        <el-form :model="addForm" label-width="100px">
+                            <el-form-item label="用户名">
+                                <el-input v-model="addForm.username"></el-input>
+                            </el-form-item>
+                            <el-form-item label="客户ID">
+                                <el-input v-model="addForm.customerId"></el-input>
+                            </el-form-item>
+                            <el-form-item label="状态">
+                                <el-select v-model="addForm.status" placeholder="请选择状态">
+                                    <el-option label="待付款" :value="0"></el-option>
+                                    <el-option label="待发货" :value="1"></el-option>
+                                    <el-option label="已发货" :value="2"></el-option>
+                                    <el-option label="已完成" :value="3"></el-option>
+                                    <el-option label="已取消" :value="4"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="收货人">
+                                <el-input v-model="addForm.receiverName" placeholder="请输入收货人"></el-input>
+                            </el-form-item>
+                            <el-form-item label="联系电话">
+                                <el-input v-model="addForm.receiverPhone" placeholder="请输入联系电话"></el-input>
+                            </el-form-item>
+                            <el-form-item label="收货地址">
+                                <el-input v-model="addForm.shippingAddress" placeholder="请输入收货地址"></el-input>
+                            </el-form-item>
+                            <el-form-item label="商品明细">
+                                <el-table :data="addForm.items" style="width: 100%; margin-bottom: 10px;">
+                                    <el-table-column prop="productId" label="商品">
+                                        <template slot-scope="scope">
+                                            <el-select v-model="scope.row.productId" placeholder="请选择商品" @change="onProductChange(scope.row)">
+                                                <el-option v-for="p in productList" :key="p.productId" :label="p.productName" :value="p.productId"></el-option>
+                                            </el-select>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="productName" label="商品名" width="180">
+                                        <template slot-scope="scope">
+                                            <span>{{ scope.row.productName }}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="currentPrice" label="单价" width="100">
+                                        <template slot-scope="scope">
+                                            <el-input v-model.number="scope.row.currentPrice" type="number" min="0" @input="updateItemTotal(scope.row, 'add')"></el-input>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="quantity" label="数量" width="80">
+                                        <template slot-scope="scope">
+                                            <el-input v-model.number="scope.row.quantity" type="number" min="1" @input="updateItemTotal(scope.row, 'add')"></el-input>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="totalPrice" label="小计" width="100">
+                                        <template slot-scope="scope">
+                                            <span>{{(scope.row.currentPrice * scope.row.quantity).toFixed(2)}}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="操作" width="80">
+                                        <template slot-scope="scope">
+                                            <el-button size="mini" type="danger" @click="removeItem(scope.$index, 'add')">删除</el-button>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                                <el-button size="mini" type="primary" @click="addItem('add')">添加商品</el-button>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer">
+                            <el-button @click="showAddDialog = false">取消</el-button>
+                            <el-button type="primary" @click="addOrder">保存</el-button>
+                        </div>
+                    </el-dialog>
+
+                    <!-- 编辑订单对话框 -->
+                    <el-dialog title="编辑订单" :visible.sync="showEditDialog">
+                        <el-form :model="editForm" label-width="100px">
+                            <el-form-item label="订单号">
+                                <el-input v-model="editForm.orderId" disabled></el-input>
+                            </el-form-item>
+                            <el-form-item label="用户名">
+                                <el-input v-model="editForm.username"></el-input>
+                            </el-form-item>
+                            <el-form-item label="客户ID">
+                                <el-input v-model="editForm.customerId"></el-input>
+                            </el-form-item>
+                            <el-form-item label="状态">
+                                <el-select v-model="editForm.status" placeholder="请选择状态">
+                                    <el-option label="待付款" :value="0"></el-option>
+                                    <el-option label="待发货" :value="1"></el-option>
+                                    <el-option label="已发货" :value="2"></el-option>
+                                    <el-option label="已完成" :value="3"></el-option>
+                                    <el-option label="已取消" :value="4"></el-option>
+                                </el-select>
+                            </el-form-item>
+                            <el-form-item label="商品明细">
+                                <el-table :data="editForm.items" style="width: 100%; margin-bottom: 10px;">
+                                    <el-table-column prop="productId" label="商品">
+                                        <template slot-scope="scope">
+                                            <el-select v-model="scope.row.productId" placeholder="请选择商品" @change="onProductChange(scope.row)">
+                                                <el-option v-for="p in productList" :key="p.productId" :label="p.productName" :value="p.productId"></el-option>
+                                            </el-select>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="productName" label="商品名" width="180">
+                                        <template slot-scope="scope">
+                                            <span>{{ scope.row.productName }}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="currentPrice" label="单价" width="100">
+                                        <template slot-scope="scope">
+                                            <el-input v-model.number="scope.row.currentPrice" type="number" min="0" @input="updateItemTotal(scope.row, 'edit')"></el-input>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="quantity" label="数量" width="80">
+                                        <template slot-scope="scope">
+                                            <el-input v-model.number="scope.row.quantity" type="number" min="1" @input="updateItemTotal(scope.row, 'edit')"></el-input>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column prop="totalPrice" label="小计" width="100">
+                                        <template slot-scope="scope">
+                                            <span>{{(scope.row.currentPrice * scope.row.quantity).toFixed(2)}}</span>
+                                        </template>
+                                    </el-table-column>
+                                    <el-table-column label="操作" width="80">
+                                        <template slot-scope="scope">
+                                            <el-button size="mini" type="danger" @click="removeItem(scope.$index, 'edit')">删除</el-button>
+                                        </template>
+                                    </el-table-column>
+                                </el-table>
+                                <el-button size="mini" type="primary" @click="addItem('edit')">添加商品</el-button>
+                            </el-form-item>
+                        </el-form>
+                        <div slot="footer">
+                            <el-button @click="showEditDialog = false">取消</el-button>
+                            <el-button type="primary" @click="updateOrder">保存</el-button>
+                        </div>
+                    </el-dialog>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 使用CDN引入所有依赖 -->
+    <script src="https://cdn.jsdelivr.net/npm/vue@2.6.14/dist/vue.js"></script>
+    <script src="https://unpkg.com/element-ui/lib/index.js"></script>
+    <script src="../axios.min.js"></script>
+    <script>
+        Vue.use(ELEMENT);
+        axios.defaults.baseURL = 'http://localhost:9000';
+        axios.defaults.withCredentials = true;
+        new Vue({
+            el: "#app-layout",
+            data() {
+                return {
+                    activeMenu: 'orderList.html',
+                    orderList: [],
+                    searchForm: {
+                        orderNo: '',
+                        username: '',
+                        status: null
+                    },
+                    currentPage: 1,
+                    pageSize: 10,
+                    total: 0,
+                    loading: false,
+                    showAddDialog: false,
+                    showEditDialog: false,
+                    addForm: {
+                        username: '',
+                        customerId: '',
+                        totalAmount: '',
+                        status: '',
+                        receiverName: '',
+                        receiverPhone: '',
+                        shippingAddress: '',
+                        items: []
+                    },
+                    editForm: {
+                        items: []
+                    },
+                    productList: []
+                }
+            },
+            created() {
+                this.getOrderList();
+                this.getProductList();
+            },
+            methods: {
+                getOrderList() {
+                    this.loading = true;
+                    const params = {
+                        pageNum: this.currentPage,
+                        pageSize: this.pageSize
+                    };
+                    
+                    // 只添加非空参数
+                    if (this.searchForm.orderNo) {
+                        params.orderNo = this.searchForm.orderNo;
+                    }
+                    if (this.searchForm.username) {
+                        params.username = this.searchForm.username;
+                    }
+                    if (this.searchForm.status !== null && this.searchForm.status !== '') {
+                        params.status = this.searchForm.status;
+                    }
+                    
+                    console.log('订单列表请求参数:', params);
+                    
+                    axios.get("/order/list", { params })
+                        .then(response => {
+                            console.log('订单列表完整响应:', response);
+                            console.log('订单列表响应数据:', response.data);
+                            
+                            // 使用与商品管理页面相同的数据解析逻辑
+                            let orderList = [];
+                            let total = 0;
+                            
+                            // 支持多种响应格式
+                            if (response.data.code === 200 || response.data.ok === true) {
+                                // 格式1: {ok: true, data: {list: [], total: 0}}
+                                if (response.data.data && response.data.data.list) {
+                                    orderList = response.data.data.list;
+                                    total = response.data.data.total || 0;
+                                }
+                                // 格式2: {code: 200, data: {list: [], total: 0}}
+                                else if (response.data.data && response.data.data.list) {
+                                    orderList = response.data.data.list;
+                                    total = response.data.data.total || 0;
+                                }
+                                // 格式3: {code: 200, list: [], total: 0}
+                                else if (response.data.list) {
+                                    orderList = response.data.list;
+                                    total = response.data.total || 0;
+                                }
+                                // 格式4: 直接返回数组
+                                else if (Array.isArray(response.data)) {
+                                    orderList = response.data;
+                                    total = response.data.length;
+                                }
+                                // 格式5: 其他格式
+                                else {
+                                    console.warn('未知的数据格式:', response.data);
+                                    orderList = [];
+                                    total = 0;
+                                }
+                            } else {
+                                this.$message.error(response.data.message || response.data.msg || '获取订单列表失败');
+                            }
+                            
+                            this.orderList = orderList;
+                            this.total = total;
+                            
+                            console.log('解析后的订单数据:', {
+                                orderList: this.orderList,
+                                total: this.total
+                            });
+                        })
+                        .catch((error) => {
+                            console.error('获取订单列表失败:', error);
+                            this.$message.error('获取订单列表失败: ' + (error.response?.data?.message || error.message));
+                            this.orderList = [];
+                            this.total = 0;
+                        })
+                        .finally(() => {
+                            this.loading = false;
+                        });
+                },
+                handleSearch() {
+                    this.currentPage = 1;
+                    this.getOrderList();
+                },
+                resetSearch() {
+                    this.searchForm = {
+                        orderNo: '',
+                        username: '',
+                        status: null
+                    };
+                    this.handleSearch();
+                },
+                handleSizeChange(val) {
+                    this.pageSize = val;
+                    this.getOrderList();
+                },
+                handleCurrentChange(val) {
+                    this.currentPage = val;
+                    this.getOrderList();
+                },
+                openEditDialog(row) {
+                    this.editForm = Object.assign({}, row);
+                    this.showEditDialog = true;
+                },
+                addItem(formType) {
+                    const item = {
+                        productId: '',
+                        productName: '',
+                        currentPrice: 0,
+                        quantity: 1,
+                        totalPrice: 0
+                    };
+                    if (formType === 'add') {
+                        this.addForm.items.push(item);
+                    } else {
+                        this.editForm.items.push(item);
+                    }
+                },
+                removeItem(index, formType) {
+                    if (formType === 'add') {
+                        this.addForm.items.splice(index, 1);
+                    } else {
+                        this.editForm.items.splice(index, 1);
+                    }
+                },
+                updateItemTotal(row, formType) {
+                    row.totalPrice = (Number(row.currentPrice) * Number(row.quantity)) || 0;
+                    // 自动更新订单总金额
+                    let items = formType === 'add' ? this.addForm.items : this.editForm.items;
+                    let total = items.reduce((sum, item) => sum + (Number(item.currentPrice) * Number(item.quantity)), 0);
+                    if (formType === 'add') {
+                        this.addForm.totalAmount = total.toFixed(2);
+                    } else {
+                        this.editForm.totalAmount = total.toFixed(2);
+                    }
+                },
+                addOrder() {
+                    // 自动计算总金额
+                    this.addForm.totalAmount = this.addForm.items.reduce((sum, item) => sum + (Number(item.currentPrice) * Number(item.quantity)), 0).toFixed(2);
+                    axios.post('/order/add', this.addForm).then(response => {
+                        if(response.data && (response.data.ok || response.data.code === 200)) {
+                            this.$message.success(response.data.msg || response.data.message || '新增成功');
+                            this.showAddDialog = false;
+                            this.getOrderList();
+                            // 重置表单
+                            this.addForm = { username: '', customerId: '', totalAmount: '', status: '', receiverName: '', receiverPhone: '', shippingAddress: '', items: [] };
+                        } else {
+                            this.$message.error(response.data.msg || response.data.message || '新增失败');
+                        }
+                    });
+                },
+                updateOrder() {
+                    // 自动计算总金额
+                    this.editForm.totalAmount = this.editForm.items.reduce((sum, item) => sum + (Number(item.currentPrice) * Number(item.quantity)), 0).toFixed(2);
+                    axios.post('/order/update', this.editForm).then(response => {
+                        if(response.data && (response.data.ok || response.data.code === 200)) {
+                            this.$message.success(response.data.msg || response.data.message || '更新成功');
+                            this.showEditDialog = false;
+                            this.getOrderList();
+                        } else {
+                            this.$message.error(response.data.msg || response.data.message || '更新失败');
+                        }
+                    });
+                },
+                deleteOrder(orderId) {
+                    this.$confirm('确定要删除该订单吗？', '提示', {
+                        type: 'warning'
+                    }).then(() => {
+                        axios.delete(`/order/delete/${orderId}`).then(response => {
+                            if(response.data && (response.data.ok || response.data.code === 200)) {
+                                this.$message.success(response.data.msg || response.data.message || '删除成功');
+                                this.getOrderList();
+                            } else {
+                                this.$message.error(response.data.msg || response.data.message || '删除失败');
+                            }
+                        });
+                    });
+                },
+                viewOrderDetail(row) {
+                    // 将订单信息存储到 localStorage，供详情页面使用
+                    localStorage.setItem('orderDetail', JSON.stringify(row));
+                    // 跳转到订单详情页面，并传递订单ID参数
+                    window.location.href = `managerOrderdetail.html?id=${row.orderId}`;
+                },
+                getStatusText(status) {
+                    const statusMap = {
+                        0: '待付款',
+                        1: '待发货',
+                        2: '已发货',
+                        3: '已完成',
+                        4: '已取消'
+                    };
+                    return statusMap[status] || '未知状态';
+                },
+                getStatusTagType(status) {
+                    const typeMap = {
+                        0: 'warning',
+                        1: 'primary',
+                        2: 'info',
+                        3: 'success',
+                        4: 'danger'
+                    };
+                    return typeMap[status] || '';
+                },
+                formatDate(dateStr) {
+                    if (!dateStr) return '';
+                    const date = new Date(dateStr);
+                    if (isNaN(date.getTime())) return '';
+                    const pad = n => n < 10 ? '0' + n : n;
+                    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+                },
+                handleMenuSelect(index) {
+                    window.location.href = index;
+                },
+                handleCommand(command) {
+                    if (command === 'logout') {
+                        axios.get("/logout").finally(() => {
+                            localStorage.removeItem('userId');
+                            localStorage.removeItem('username');
+                            window.location.href = 'managerLogin.html';
+                        });
+                    }
+                },
+                getProductList() {
+                    axios.get("/product/all").then(response => {
+                        if (response.data && (response.data.code === 200 || response.data.ok === true)) {
+                            this.productList = response.data.data || [];
+                        } else {
+                            this.$message.error(response.data && (response.data.msg || response.data.message) ? (response.data.msg || response.data.message) : '获取商品列表失败');
+                            this.productList = [];
+                        }
+                    }).catch(error => {
+                        this.productList = [];
+                    });
+                },
+                onProductChange(row) {
+                    const product = this.productList.find(p => p.productId === row.productId);
+                    if (product) {
+                        row.productName = product.productName;
+                        row.currentPrice = product.currentPrice;
+                    } else {
+                        row.productName = '';
+                        row.currentPrice = 0;
+                    }
+                    row.quantity = row.quantity || 1;
+                    row.totalPrice = (Number(row.currentPrice) * Number(row.quantity)) || 0;
+                }
+            },
+            mounted() {
+                this.activeMenu = 'orderList.html';
+            }
+        });
+    </script>
+</body>
+</html>

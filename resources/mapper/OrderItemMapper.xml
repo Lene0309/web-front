@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.nikki.finalproject.mapper.OrderItemMapper">
+
+    <!-- 结果映射 -->
+    <resultMap id="OrderItemResultMap" type="com.nikki.finalproject.entity.OrderItem">
+        <id column="item_id" property="itemId" jdbcType="VARCHAR"/>
+        <result column="order_id" property="orderId" jdbcType="VARCHAR"/>
+        <result column="product_id" property="productId" jdbcType="VARCHAR"/>
+        <result column="product_name" property="productName" jdbcType="VARCHAR"/>
+        <result column="category_name" property="categoryName" jdbcType="VARCHAR"/>
+        <result column="current_price" property="currentPrice" jdbcType="DECIMAL"/>
+        <result column="quantity" property="quantity" jdbcType="INTEGER"/>
+        <result column="total_price" property="totalPrice" jdbcType="DECIMAL"/>
+    </resultMap>
+
+    <!-- 根据订单ID查询订单项 -->
+    <select id="selectItemsByOrderId" resultMap="OrderItemResultMap">
+        SELECT 
+            oi.item_id,
+            oi.order_id,
+            oi.product_id,
+            oi.product_name,
+            oi.category_name,
+            oi.current_price,
+            oi.quantity,
+            oi.total_price
+        FROM order_items oi
+        WHERE oi.order_id = #{orderId}
+    </select>
+
+    <!-- 插入订单项 -->
+    <insert id="insert" parameterType="com.nikki.finalproject.entity.OrderItem">
+        INSERT INTO order_items (
+            item_id,
+            order_id,
+            product_id,
+            product_name,
+            category_name,
+            current_price,
+            quantity,
+            total_price
+        ) VALUES (
+            #{itemId},
+            #{orderId},
+            #{productId},
+            #{productName},
+            #{categoryName},
+            #{currentPrice},
+            #{quantity},
+            #{totalPrice}
+        )
+    </insert>
+
+    <!-- 根据订单ID删除订单项 -->
+    <delete id="deleteByOrderId">
+        DELETE FROM order_items WHERE order_id = #{orderId}
+    </delete>
+
+    <!-- 更新订单项 -->
+    <update id="update" parameterType="com.nikki.finalproject.entity.OrderItem">
+        UPDATE order_items
+        SET 
+            product_id = #{productId},
+            product_name = #{productName},
+            category_name = #{categoryName},
+            current_price = #{currentPrice},
+            quantity = #{quantity},
+            total_price = #{totalPrice}
+        WHERE item_id = #{itemId}
+    </update>
+
+</mapper> 
